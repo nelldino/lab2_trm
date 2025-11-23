@@ -1,232 +1,72 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AR NFT – Van Gogh Journey</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR.js NFT Example</title>
 
-  <script src="https://aframe.io/releases/0.9.2/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar-nft.js"></script>
-
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-    }
-
-    #message {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 20px;
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      border-radius: 8px;
-      font-size: 18px;
-      display: none;
-      z-index: 10000;
-    }
-
-    #debug-panel {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.8);
-      color: #0f0;
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 12px;
-      max-width: 300px;
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 9998;
-    }
-
-    .button {
-      position: fixed;
-      right: 12px;
-      z-index: 9999;
-      padding: 10px 14px;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    #start-camera {
-      top: 12px;
-      background: #1e88e5;
-    }
-
-    #toggle-models {
-      top: 58px;
-      background: #4caf50;
-    }
-
-    #test-models {
-      top: 104px;
-      background: #ff9800;
-    }
-
-    #create-test-box {
-      top: 150px;
-      background: #e91e63;
-    }
-  </style>
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <!-- AR.js with NFT support -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
 </head>
 
-<body>
-  <div id="message"></div>
-  <div id="debug-panel"></div>
+<body style="margin: 0; overflow: hidden;">
+  <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
 
-  <button id="start-camera" class="button">Start Camera</button>
-  <button id="toggle-models" class="button">Toggle Models</button>
-  <button id="test-models" class="button">Test Models</button>
-  <button id="create-test-box" class="button">Create Test Box</button>
+    <!-- Global state to track marker scans -->
+    <a-entity id="globalState" starry-scanned="false" vangogh-scanned="false">
+    </a-entity>
 
-  <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" embedded
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true; sourceWidth: 1280; sourceHeight: 720; canvasWidth: 1280; canvasHeight: 720;">
-
-    <!-- NFT #1 — Van Gogh portrait -->
-    <a-nft id="vangogh-marker" type="nft" url="./vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01"
-      smoothThreshold="5">
-
-      <!-- Van Gogh figure generated via code -->
-      <a-entity id="vincentModel" visible="false" position="0 0 0">
-        <a-cylinder color="#ffcc99" height="1" radius="0.2" position="0 0.5 0"></a-cylinder> <!-- body -->
-        <a-sphere color="#ffe0bd" radius="0.2" position="0 1.2 0"></a-sphere> <!-- head -->
-        <a-box color="#8B4513" depth="0.1" height="0.5" width="0.1" position="-0.25 0.75 0"></a-box> <!-- left arm -->
-        <a-box color="#8B4513" depth="0.1" height="0.5" width="0.1" position="0.25 0.75 0"></a-box> <!-- right arm -->
-        <a-box color="#654321" depth="0.1" height="0.5" width="0.1" position="-0.1 0 0"></a-box> <!-- left leg -->
-        <a-box color="#654321" depth="0.1" height="0.5" width="0.1" position="0.1 0 0"></a-box> <!-- right leg -->
-      </a-entity>
+    <!-- Starry Night Marker -->
+    <a-nft type="nft" url="markers/starrynight" smooth="true" smoothCount="10" smoothTolerance="0.01"
+      smoothThreshold="5" id="starryMarker">
+      <a-entity id="starryModel" gltf-model="models/scene.glb" scale="0.5 0.5 0.5" rotation="0 180 0"
+        visible="true"></a-entity>
     </a-nft>
 
-    <!-- NFT #2 — Starry Night -->
-    <a-nft id="starry-marker" type="nft" url="./starrynight" smooth="true" smoothCount="10" smoothTolerance="0.01"
-      smoothThreshold="5">
-
-      <a-entity id="starryScene" visible="false">
-        <!-- Sky background -->
-        <a-sphere color="#001133" radius="5" position="0 2 0" segments-height="18" segments-width="36"
-          material="side: back"></a-sphere>
-        <a-entity id="stars"></a-entity>
-      </a-entity>
+    <!-- Van Gogh Marker -->
+    <a-nft type="nft" url="markers/vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5"
+      id="vangoghMarker">
+      <a-entity id="vangoghModel" gltf-model="models/vangogh.glb" scale="0.5 0.5 0.5" rotation="0 180 0"
+        visible="false"></a-entity>
     </a-nft>
 
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    const debugPanel = document.getElementById('debug-panel');
-    function debugLog(msg) {
-      console.log(msg);
-      const time = new Date().toLocaleTimeString();
-      debugPanel.innerHTML += `[${time}] ${msg}<br>`;
-      debugPanel.scrollTop = debugPanel.scrollHeight;
-    }
+    // Get entities
+    const starryMarker = document.querySelector('#starryMarker');
+    const vangoghMarker = document.querySelector('#vangoghMarker');
+    const starryModel = document.querySelector('#starryModel');
+    const vangoghModel = document.querySelector('#vangoghModel');
+    const globalState = document.querySelector('#globalState');
 
-    let hasScannedVangogh = false;
-
-    function showMessage(text, duration = 2000) {
-      const msg = document.getElementById("message");
-      msg.innerHTML = text;
-      msg.style.display = "block";
-      setTimeout(() => msg.style.display = "none", duration);
-    }
-
-    // Marker events
-    document.querySelector("#vangogh-marker").addEventListener("markerFound", () => {
-      debugLog('✓ Van Gogh marker found');
-      hasScannedVangogh = true;
-      document.getElementById("vincentModel").setAttribute("visible", true);
-      showMessage("You met the artist. The painting is now unlocked.");
+    // Starry Night marker events
+    starryMarker.addEventListener('markerFound', () => {
+      starryModel.setAttribute('visible', 'true');
+      vangoghModel.setAttribute('visible', 'false');
+      globalState.setAttribute('starry-scanned', 'true');
     });
 
-    document.querySelector("#vangogh-marker").addEventListener("markerLost", () => {
-      debugLog('Van Gogh marker lost');
-      document.getElementById("vincentModel").setAttribute("visible", false);
+    starryMarker.addEventListener('markerLost', () => {
+      starryModel.setAttribute('visible', 'false');
     });
 
-    document.querySelector("#starry-marker").addEventListener("markerFound", () => {
-      debugLog('✓ Starry Night marker found');
-      if (!hasScannedVangogh) {
-        showMessage("Meet the artist first.");
-        debugLog('Blocked: Van Gogh not scanned yet');
-        return;
+    // Van Gogh marker events
+    vangoghMarker.addEventListener('markerFound', () => {
+      // Only show if Starry Night was scanned before
+      if (globalState.getAttribute('starry-scanned') === 'true') {
+        vangoghModel.setAttribute('visible', 'true');
+        starryModel.setAttribute('visible', 'false');
+        globalState.setAttribute('vangogh-scanned', 'true');
       }
-      document.getElementById("starryScene").setAttribute("visible", true);
-      showMessage("Welcome to Starry Night.");
     });
 
-    document.querySelector("#starry-marker").addEventListener("markerLost", () => {
-      debugLog('Starry Night marker lost');
-      document.getElementById("starryScene").setAttribute("visible", false);
-    });
-
-    // Camera start button
-    document.getElementById('start-camera').addEventListener('click', () => {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showMessage('Camera not supported in this browser.');
-        debugLog('✗ Camera API not available');
-        return;
-      }
-      debugLog('Requesting camera permission...');
-      showMessage('Requesting camera permission...');
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
-        .then(stream => {
-          stream.getTracks().forEach(t => t.stop());
-          showMessage('Camera permission granted. AR should start.');
-          document.getElementById('start-camera').style.display = 'none';
-          debugLog('✓ Camera permission granted');
-        })
-        .catch(err => {
-          debugLog('✗ Camera error: ' + err.name);
-          showMessage('Camera permission denied: ' + err.name, 5000);
-        });
-    });
-
-    // Toggle models button
-    document.getElementById('toggle-models').addEventListener('click', () => {
-      const vincent = document.getElementById('vincentModel');
-      const starry = document.getElementById('starryScene');
-      const newVis = vincent.getAttribute('visible') !== 'true';
-      vincent.setAttribute('visible', newVis);
-      starry.setAttribute('visible', newVis);
-      debugLog(`Toggled visibility: ${newVis}`);
-    });
-
-    // Test models button - force show without markers
-    document.getElementById('test-models').addEventListener('click', () => {
-      document.getElementById('vincentModel').setAttribute('visible', true);
-      document.getElementById('starryScene').setAttribute('visible', true);
-      showMessage('Models shown for testing', 2000);
-    });
-
-    // Procedural stars
-    function createStars(numStars = 100) {
-      const starsParent = document.getElementById('stars');
-      for (let i = 0; i < numStars; i++) {
-        const star = document.createElement('a-sphere');
-        star.setAttribute('radius', Math.random() * 0.05 + 0.02);
-        star.setAttribute('color', '#ffff66');
-        star.setAttribute('position', {
-          x: (Math.random() - 0.5) * 4,
-          y: Math.random() * 3,
-          z: (Math.random() - 0.5) * -4
-        });
-        star.setAttribute('animation', `property: scale; dir: alternate; dur: ${Math.random() * 2000 + 1000}; loop: true; to: 1.5 1.5 1.5`);
-        starsParent.appendChild(star);
-      }
-    }
-
-    window.addEventListener('load', () => {
-      debugLog('Page loaded');
-      createStars(100);
+    vangoghMarker.addEventListener('markerLost', () => {
+      vangoghModel.setAttribute('visible', 'false');
     });
   </script>
 </body>
