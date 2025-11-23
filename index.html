@@ -82,6 +82,7 @@
   <button id="toggle-models" class="button">Toggle Models</button>
   <button id="test-models" class="button">Test Models</button>
   <button id="create-test-box" class="button" style="top: 150px; background: #e91e63;">Create Test Box</button>
+  <button id="force-show-models" class="button" style="top: 196px; background: #9c27b0;">Force Show Models</button>
 
   <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" embedded
     arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true; sourceWidth: 1280; sourceHeight: 720; canvasWidth: 1280; canvasHeight: 720;">
@@ -434,9 +435,9 @@
         return;
       }
 
-      // Create a simple box directly in the scene
+      // Create a simple box directly in the scene at eye level
       const testBox = document.createElement('a-box');
-      testBox.setAttribute('position', '0 1 -3');
+      testBox.setAttribute('position', '0 0 -2');
       testBox.setAttribute('color', '#FF00FF');
       testBox.setAttribute('width', '0.5');
       testBox.setAttribute('height', '0.5');
@@ -445,8 +446,8 @@
 
       scene.appendChild(testBox);
 
-      debugLog('✓ Test box created at 0 1 -3');
-      showMessage('Pink test box created 3m ahead', 3000);
+      debugLog('✓ Test box created at 0 0 -2 (eye level)');
+      showMessage('Pink box 2m ahead at eye level', 3000);
 
       // Also log camera info
       setTimeout(() => {
@@ -455,6 +456,44 @@
         debugLog(`Camera pos: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`);
         debugLog(`Camera rot: (${rot.x.toFixed(2)}, ${rot.y.toFixed(2)}, ${rot.z.toFixed(2)})`);
       }, 100);
+    });
+
+    // Force show models button - show fallback boxes at eye level
+    document.getElementById('force-show-models').addEventListener('click', () => {
+      debugLog('Force showing fallback boxes at eye level...');
+
+      const vf = document.getElementById('vincentFallback');
+      const sf = document.getElementById('starryFallback');
+
+      // Make fallback boxes bigger and position at eye level
+      vf.setAttribute('position', '-0.6 0 -2');
+      vf.setAttribute('scale', '1 1 1');
+      vf.setAttribute('visible', 'true');
+      debugLog('Vincent fallback: blue box at -0.6 0 -2');
+
+      sf.setAttribute('position', '0.6 0 -2');
+      sf.setAttribute('scale', '1 1 1');
+      sf.setAttribute('visible', 'true');
+      debugLog('Starry fallback: red box at 0.6 0 -2');
+
+      showMessage('Fallback boxes shown at eye level', 3000);
+
+      // Also try the actual models if loaded
+      if (vincentLoaded) {
+        const v = document.getElementById('vincentModel');
+        v.setAttribute('position', '-1.2 0 -2');
+        v.setAttribute('scale', '0.3 0.3 0.3');
+        v.setAttribute('visible', 'true');
+        debugLog('Vincent model at -1.2 0 -2');
+      }
+
+      if (starryLoaded) {
+        const s = document.getElementById('starryScene');
+        s.setAttribute('position', '1.2 0 -2');
+        s.setAttribute('scale', '0.3 0.3 0.3');
+        s.setAttribute('visible', 'true');
+        debugLog('Starry model at 1.2 0 -2');
+      }
     });
 
     // Initialize
