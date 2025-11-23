@@ -81,6 +81,7 @@
   <button id="start-camera" class="button">Start Camera</button>
   <button id="toggle-models" class="button">Toggle Models</button>
   <button id="test-models" class="button">Test Models</button>
+  <button id="create-test-box" class="button" style="top: 150px; background: #e91e63;">Create Test Box</button>
 
   <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" embedded
     arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true; sourceWidth: 1280; sourceHeight: 720; canvasWidth: 1280; canvasHeight: 720;">
@@ -222,6 +223,19 @@
       vincent.addEventListener('model-loaded', (e) => {
         vincentLoaded = true;
         debugLog('✓ Vincent model loaded successfully');
+
+        // Log model details
+        setTimeout(() => {
+          const obj = vincent.object3D;
+          if (obj) {
+            debugLog(`  Vincent visible: ${obj.visible}, children: ${obj.children.length}`);
+            const bbox = new THREE.Box3().setFromObject(obj);
+            const size = new THREE.Vector3();
+            bbox.getSize(size);
+            debugLog(`  Vincent size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+          }
+        }, 100);
+
         fitModelToMarker(vincent, 0.6);
       });
 
@@ -235,6 +249,19 @@
       starry.addEventListener('model-loaded', (e) => {
         starryLoaded = true;
         debugLog('✓ Starry model loaded successfully');
+
+        // Log model details
+        setTimeout(() => {
+          const obj = starry.object3D;
+          if (obj) {
+            debugLog(`  Starry visible: ${obj.visible}, children: ${obj.children.length}`);
+            const bbox = new THREE.Box3().setFromObject(obj);
+            const size = new THREE.Vector3();
+            bbox.getSize(size);
+            debugLog(`  Starry size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+          }
+        }, 100);
+
         fitModelToMarker(starry, 0.9);
       });
 
@@ -333,33 +360,101 @@
     document.getElementById('test-models').addEventListener('click', () => {
       debugLog('Testing model visibility...');
 
+      const scene = document.querySelector('a-scene');
+      const camera = document.querySelector('[camera]');
+
+      if (!camera) {
+        debugLog('✗ Camera not found');
+        showMessage('Camera not initialized', 2000);
+        return;
+      }
+
       const v = document.getElementById('vincentModel');
       const s = document.getElementById('starryScene');
       const vf = document.getElementById('vincentFallback');
       const sf = document.getElementById('starryFallback');
 
+      // Temporarily detach from markers and attach to scene
+      const vParent = v.parentNode;
+      const sParent = s.parentNode;
+      const vfParent = vf.parentNode;
+      const sfParent = sf.parentNode;
+
+      // Get camera position
+      const cameraPos = camera.object3D.position;
+      const cameraRot = camera.object3D.rotation;
+
+      debugLog(`Camera at: ${cameraPos.x.toFixed(2)}, ${cameraPos.y.toFixed(2)}, ${cameraPos.z.toFixed(2)}`);
+
       // Position in front of camera
       if (vincentLoaded) {
-        v.setAttribute('position', '0 0 -2');
+        v.object3D.position.set(cameraPos.x - 0.5, cameraPos.y, cameraPos.z - 2);
+        v.object3D.rotation.set(0, cameraRot.y, 0);
         v.setAttribute('visible', true);
-        debugLog('Vincent model positioned at 0 0 -2');
+        v.setAttribute('scale', '0.5 0.5 0.5');
+        debugLog('Vincent model positioned in world space');
       } else {
-        vf.setAttribute('position', '0 0 -2');
+        vf.object3D.position.set(cameraPos.x - 0.5, cameraPos.y, cameraPos.z - 2);
+        vf.object3D.rotation.set(0, cameraRot.y, 0);
         vf.setAttribute('visible', true);
-        debugLog('Vincent fallback positioned at 0 0 -2');
+        debugLog('Vincent fallback positioned in world space');
       }
 
       if (starryLoaded) {
-        s.setAttribute('position', '1 0 -2');
+        s.object3D.position.set(cameraPos.x + 0.5, cameraPos.y, cameraPos.z - 2);
+        s.object3D.rotation.set(0, cameraRot.y, 0);
         s.setAttribute('visible', true);
-        debugLog('Starry model positioned at 1 0 -2');
+        s.setAttribute('scale', '0.5 0.5 0.5');
+        debugLog('Starry model positioned in world space');
       } else {
-        sf.setAttribute('position', '1 0 -2');
+        sf.object3D.position.set(cameraPos.x + 0.5, cameraPos.y, cameraPos.z - 2);
+        sf.object3D.rotation.set(0, cameraRot.y, 0);
         sf.setAttribute('visible', true);
-        debugLog('Starry fallback positioned at 1 0 -2');
+        debugLog('Starry fallback positioned in world space');
       }
 
       showMessage('Models positioned in front of camera', 3000);
+
+      // Force render
+      scene.object3D.visible = true;
+      if (scene.renderer) {
+        scene.renderer.render(scene.object3D, camera.object3DMap.camera);
+      }
+    });
+
+    // Create test box button - simple test without markers
+    document.getElementById('create-test-box').addEventListener('click', () => {
+      debugLog('Creating test box directly in scene...');
+
+      const scene = document.querySelector('a-scene');
+      const camera = document.querySelector('[camera]');
+
+      if (!camera) {
+        debugLog('✗ Camera not found');
+        return;
+      }
+
+      // Create a simple box directly in the scene
+      const testBox = document.createElement('a-box');
+      testBox.setAttribute('position', '0 1 -3');
+      testBox.setAttribute('color', '#FF00FF');
+      testBox.setAttribute('width', '0.5');
+      testBox.setAttribute('height', '0.5');
+      testBox.setAttribute('depth', '0.5');
+      testBox.setAttribute('visible', true);
+
+      scene.appendChild(testBox);
+
+      debugLog('✓ Test box created at 0 1 -3');
+      showMessage('Pink test box created 3m ahead', 3000);
+
+      // Also log camera info
+      setTimeout(() => {
+        const pos = camera.object3D.position;
+        const rot = camera.object3D.rotation;
+        debugLog(`Camera pos: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`);
+        debugLog(`Camera rot: (${rot.x.toFixed(2)}, ${rot.y.toFixed(2)}, ${rot.z.toFixed(2)})`);
+      }, 100);
     });
 
     // Initialize
