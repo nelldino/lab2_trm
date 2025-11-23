@@ -1,261 +1,442 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>AR Interaction Lab (No Super-Hands)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<!-- import aframe and then ar.js with image tracking / location based features -->
+<script
+  src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
+<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 
-  <!-- A-Frame -->
-  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <!-- AR.js for A-Frame (marker-based AR) -->
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+<script>
+  // ======= INTERACTIVE AR SYSTEM WITH MULTIPLE SCENARIOS =======
 
-  <style>
-    body { margin:0; overflow:hidden; }
-    .hud {
-      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
-      display: grid; grid-template-columns: repeat(5, auto); gap: 8px;
-      font: 600 14px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      z-index: 10; pointer-events: none;
-    }
-    .hud.hidden { display: none; }
-    .hud button {
-      pointer-events: auto;
-      padding: 10px 12px; border: 0; border-radius: 10px;
-      background: rgba(255,255,255,.9);
-    }
-  </style>
+  // State Management
+  let firstMarkerScanned = false;
+  let secondMarkerUnlocked = false;
+  let clickCount = 0;
+  let griffinAnimating = false;
+  let sceneModelColor = 'original';
+  let totalInteractions = 0;
 
-  <script>
-  // ---------- Utilities ----------
-  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  // Register custom A-Frame components for touch interactions
+  AFRAME.registerComponent('tap-listener', {
+    init: function () {
+      let touchStartTime = 0;
 
-  // ---------- 1) Tap / doubletap / longpress ----------
-  AFRAME.registerComponent('tap-gestures', {
-    schema: {longMs:{default:500}},
-    init () {
-      let lastTap = 0, pressTimer = null, down = false;
-      this.el.addEventListener('mousedown', () => {
-        down = true;
-        const now = performance.now();
-        if (now - lastTap < 300) this.el.emit('doubletap');
-        lastTap = now;
-        pressTimer = setTimeout(() => { if (down) this.el.emit('longpress'); }, this.data.longMs);
+      this.el.addEventListener('touchstart', (e) => {
+        touchStartTime = Date.now();
       });
-      this.el.addEventListener('mouseup', () => {
-        down = false;
-        clearTimeout(pressTimer);
-        this.el.emit('tap');
+
+      this.el.addEventListener('touchend', (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+        if (touchDuration < 200) { // Quick tap
+          this.el.emit('tap');
+          console.log('Tap detected on', this.el.id);
+        }
       });
-      this.el.addEventListener('touchstart', e => e.preventDefault(), {passive:false});
     }
   });
 
-  // ---------- 2) Drag on a plane (marker plane) ----------
-  // Drag with mouse/touch by intersecting an invisible plane and moving the entity to that point.
-  AFRAME.registerComponent('drag-on-plane', {
-    schema: { plane: {type: 'selector'}, yOffset: {default: 0.25}, radius: {default: 0.6} },
-    init () {
-      this.dragging = false;
-      this.scene = this.el.sceneEl;
-      this.rayEl = document.querySelector('#ray'); // scene cursor ray
-      // listen on element
-      this.el.addEventListener('mousedown', () => this.dragging = true);
-      window.addEventListener('mouseup',   () => this.dragging = false);
-      window.addEventListener('touchend',  () => this.dragging = false);
-      // move
-      this.scene.addEventListener('mousemove', (e)=> this.updateDrag());
-      this.scene.addEventListener('touchmove', (e)=> this.updateDrag());
-    },
-    updateDrag () {
-      if (!this.dragging) return;
-      if (!this.data.plane) return;
-      const raycaster = this.rayEl.getObject3D('raycaster');
-      if (!raycaster) return;
-      const planeMesh = this.data.plane.getObject3D('mesh');
-      if (!planeMesh) return;
+  window.addEventListener('load', function () {
+    const sceneEl = document.querySelector('a-scene');
+    const firstNft = document.querySelector('#first-marker');
+    const secondNft = document.querySelector('#second-marker');
+    const statusText = document.getElementById('status-text-html');
+    const interactionText = document.getElementById('interaction-text-html');
 
-      // Build a THREE.Plane from the plane entity (its world transform).
-      planeMesh.updateMatrixWorld();
-      const normal = new THREE.Vector3(0,1,0).applyQuaternion(planeMesh.getWorldQuaternion(new THREE.Quaternion()));
-      const point  = planeMesh.getWorldPosition(new THREE.Vector3());
-      const plane  = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, point);
+    // Initially hide the second marker
+    secondNft.setAttribute('visible', 'false');
 
-      const ray = raycaster.ray; // world-space ray from cursor
-      const hit = new THREE.Vector3();
-      if (ray.intersectPlane(plane, hit)) {
-        // constrain to radius on XZ around marker center
-        const local = this.el.parentEl.object3D.worldToLocal(hit.clone());
-        const r = Math.hypot(local.x, local.z);
-        const maxR = this.data.radius;
-        if (r > maxR){
-          const k = maxR / r;
-          local.x *= k; local.z *= k;
-        }
-        this.el.setAttribute('position', `${local.x} ${this.data.yOffset} ${local.z}`);
+    // ======= SCENARIO 1: Sequential Marker Scanning =======
+    firstNft.addEventListener('markerFound', function () {
+      console.log('First marker (milky) found!');
+
+      // Show only the first model while its marker is found
+      const firstModelEl = document.querySelector('#first-model');
+      const sceneModelEl = document.querySelector('#scene-model');
+      const debugBoxEl = document.querySelector('#debug-box');
+      if (firstModelEl) firstModelEl.setAttribute('visible', 'true');
+      if (sceneModelEl) sceneModelEl.setAttribute('visible', 'false');
+      if (debugBoxEl) debugBoxEl.setAttribute('visible', 'false');
+
+      if (!firstMarkerScanned) {
+        firstMarkerScanned = true;
+        secondMarkerUnlocked = true;
+        totalInteractions++;
+
+        statusText.textContent = 'Scenario 1 Complete! Find booksign.';
+        setTimeout(() => {
+          interactionText.textContent = 'Tap the 3D model to interact!';
+        }, 2000);
+
+        // Enable the second marker to become detectable when found
+        secondNft.setAttribute('visible', 'true');
       }
-    }
-  });
+    });
 
-  // ---------- 3) Pinch to scale ----------
-  AFRAME.registerComponent('pinch-scale', {
-    schema: {min:{default:0.2}, max:{default:3}},
-    init(){
-      this.active = false; this.startD = 0; this.startScale = null;
-      const onStart = (e) => {
-        if (e.touches && e.touches.length === 2){
-          this.active = true;
-          this.startD = this.dist(e.touches[0], e.touches[1]);
-          this.startScale = Object.assign({}, this.el.getAttribute('scale'));
-        }
-      };
-      const onMove = (e) => {
-        if (!this.active || !e.touches || e.touches.length < 2) return;
-        const d = this.dist(e.touches[0], e.touches[1]);
-        const mult = d / this.startD;
-        const ns = {
-          x: clamp(this.startScale.x * mult, this.data.min, this.data.max),
-          y: clamp(this.startScale.y * mult, this.data.min, this.data.max),
-          z: clamp(this.startScale.z * mult, this.data.min, this.data.max),
-        };
-        this.el.setAttribute('scale', ns);
-      };
-      const onEnd = () => this.active = false;
-      window.addEventListener('touchstart', onStart, {passive:false});
-      window.addEventListener('touchmove',  onMove,  {passive:false});
-      window.addEventListener('touchend',   onEnd);
-      window.addEventListener('touchcancel',onEnd);
-    },
-    dist(a,b){ const dx=a.clientX-b.clientX, dy=a.clientY-b.clientY; return Math.hypot(dx,dy); }
-  });
+    // ======= SCENARIO 2: Touch Interaction on First Model =======
+    const firstModel = document.querySelector('#first-model');
 
-  // ---------- 4) Twist to rotate (two-finger) ----------
-  AFRAME.registerComponent('twist-rotate', {
-    schema:{degPerRad:{default:57.2958}}, // 180/π
-    init(){
-      this.active = false; this.startA = 0; this.startRotY = 0;
-      const angle = (a,b)=> Math.atan2(b.clientY-a.clientY, b.clientX-a.clientX);
-      const onStart = (e)=>{
-        if (e.touches && e.touches.length === 2){
-          this.active = true;
-          this.startA = angle(e.touches[0], e.touches[1]);
-          this.startRotY = this.el.getAttribute('rotation').y;
-        }
-      };
-      const onMove = (e)=>{
-        if (!this.active || !e.touches || e.touches.length < 2) return;
-        const a = angle(e.touches[0], e.touches[1]);
-        const delta = (a - this.startA) * this.data.degPerRad;
-        const r = this.el.getAttribute('rotation');
-        this.el.setAttribute('rotation', {x:r.x, y:this.startRotY + delta, z:r.z});
-      };
-      const onEnd = ()=> this.active = false;
-      window.addEventListener('touchstart', onStart, {passive:false});
-      window.addEventListener('touchmove',  onMove,  {passive:false});
-      window.addEventListener('touchend',   onEnd);
-      window.addEventListener('touchcancel',onEnd);
-    }
-  });
+    const handleFirstModelInteraction = function () {
+      clickCount++;
+      totalInteractions++;
+      console.log('First model interaction! Count:', clickCount);
 
-  // ---------- 5) Spin toggler + random color (hooked to taps) ----------
-  AFRAME.registerComponent('spin-toggle', {
-    schema:{speed:{default:4000}},
-    init(){
-      this.spinning = false;
-      this.el.addEventListener('toggle-spin', ()=> {
-        this.spinning = !this.spinning;
-        if (this.spinning) {
-          this.el.setAttribute('animation__spin',
-            `property: rotation; to: 0 360 0; loop: true; dur: ${this.data.speed}`);
-        } else {
-          this.el.removeAttribute('animation__spin');
+      if (clickCount === 1) {
+        // First tap: Change color
+        interactionText.textContent = 'Color changed! Tap again!';
+        firstModel.setAttribute('material', 'color', '#FF6B6B');
+        sceneModelColor = 'red';
+      } else if (clickCount === 2) {
+        // Second tap: Rotate animation
+        interactionText.textContent = 'Rotating! Tap again!';
+        firstModel.setAttribute('animation', {
+          property: 'rotation',
+          to: '0 360 0',
+          dur: 2000,
+          easing: 'linear',
+          loop: false
+        });
+        firstModel.setAttribute('material', 'color', '#4ECDC4');
+        sceneModelColor = 'cyan';
+      } else if (clickCount === 3) {
+        // Third tap: Scale animation
+        interactionText.textContent = 'Growing! Tap to reset!';
+        firstModel.setAttribute('animation', {
+          property: 'scale',
+          from: '100 100 100',
+          to: '150 150 150',
+          dur: 1000,
+          easing: 'easeInOutQuad',
+          loop: false
+        });
+        firstModel.setAttribute('material', 'color', '#FFE66D');
+        sceneModelColor = 'yellow';
+      } else {
+        // Fourth tap: Reset
+        interactionText.textContent = 'Reset! Start tapping again!';
+        firstModel.setAttribute('animation', {
+          property: 'scale',
+          to: '100 100 100',
+          dur: 1000,
+          easing: 'easeInOutQuad',
+          loop: false
+        });
+        firstModel.removeAttribute('material');
+        clickCount = 0;
+        sceneModelColor = 'original';
+      }
+    };
+
+    // Listen for tap event
+    firstModel.addEventListener('tap', handleFirstModelInteraction);
+
+    // ======= SCENARIO 3: Griffin Model Interactions =======
+    secondNft.addEventListener('markerFound', function () {
+      console.log('Second marker (booksign) found!');
+
+      const firstModelEl = document.querySelector('#first-model');
+      const sceneModelEl = document.querySelector('#scene-model');
+      const debugBoxEl = document.querySelector('#debug-box');
+
+      if (secondMarkerUnlocked) {
+        // show only the second marker's models
+        if (sceneModelEl) sceneModelEl.setAttribute('visible', 'true');
+        if (debugBoxEl) debugBoxEl.setAttribute('visible', 'true');
+        if (firstModelEl) firstModelEl.setAttribute('visible', 'false');
+
+        statusText.textContent = 'Scenario 2 Complete! Tap griffin!';
+        interactionText.textContent = 'Click the Griffin for animation!';
+        totalInteractions++;
+      } else {
+        interactionText.textContent = 'Scan first marker first!';
+      }
+    });
+
+    secondNft.addEventListener('markerLost', function () {
+      // hide second marker models when lost
+      const sceneModelEl = document.querySelector('#scene-model');
+      const debugBoxEl = document.querySelector('#debug-box');
+      if (sceneModelEl) sceneModelEl.setAttribute('visible', 'false');
+      if (debugBoxEl) debugBoxEl.setAttribute('visible', 'false');
+    });
+
+    const griffinModel = document.querySelector('#griffin-model');
+    const debugBox = document.querySelector('#debug-box');
+
+    // Touch interaction on Griffin
+    const handleGriffinInteraction = function () {
+      if (!griffinAnimating) {
+        griffinAnimating = true;
+        totalInteractions++;
+        console.log('Griffin tapped! Total interactions:', totalInteractions);
+        interactionText.textContent = 'Griffin is flying!';
+
+        // Flying animation
+        griffinModel.setAttribute('animation__fly', {
+          property: 'position',
+          from: '0 0 0',
+          to: '0 100 0',
+          dur: 2000,
+          dir: 'alternate',
+          loop: 2,
+          easing: 'easeInOutSine'
+        });
+
+        // Rotation animation
+        griffinModel.setAttribute('animation__spin', {
+          property: 'rotation',
+          to: '0 360 0',
+          dur: 2000,
+          loop: 2,
+          easing: 'linear'
+        });
+
+        setTimeout(() => {
+          griffinAnimating = false;
+          interactionText.textContent = 'Tap again for more!';
+        }, 4000);
+      }
+    };
+
+    griffinModel.addEventListener('tap', handleGriffinInteraction);
+
+    // Touch interaction on debug box
+    const handleBoxInteraction = function () {
+      totalInteractions++;
+      console.log('Box tapped! Total:', totalInteractions);
+      const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181'];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      debugBox.setAttribute('color', randomColor);
+      interactionText.textContent = 'Box color changed! Total: ' + totalInteractions;
+    };
+
+    debugBox.addEventListener('tap', handleBoxInteraction);
+
+    // ======= SCENARIO 4: Proximity Detection =======
+    let proximityTimer = 0;
+    firstNft.addEventListener('markerFound', function () {
+      proximityTimer = setInterval(() => {
+        if (firstMarkerScanned) {
+          interactionText.textContent = 'You are near marker 1!';
         }
-      });
-      this.el.addEventListener('random-color', ()=> {
-        const colors = ['#4CC3D9','#FFC65D','#7BC8A4','#EF2D5E','#FFFFFF'];
-        const c = colors[Math.floor(Math.random()*colors.length)];
-        this.el.setAttribute('material','color',c);
-      });
-    }
+      }, 3000);
+    });
+
+    firstNft.addEventListener('markerLost', function () {
+      clearInterval(proximityTimer);
+      interactionText.textContent = 'Marker 1 lost!';
+      // hide first model when marker lost
+      const firstModelEl = document.querySelector('#first-model');
+      if (firstModelEl) firstModelEl.setAttribute('visible', 'false');
+    });
+
+    // ======= SCENARIO 5: Multi-Touch Gesture (Double Tap) =======
+    let lastTapTime = 0;
+    let tapCounter = 0;
+
+    // Simple tap counter for testing
+    document.addEventListener('touchstart', function (e) {
+      tapCounter++;
+      const currentTime = Date.now();
+      const timeDiff = currentTime - lastTapTime;
+
+      console.log('=== TAP #' + tapCounter + ' ===');
+      console.log('Time since last tap:', timeDiff + 'ms');
+
+      // Show tap detected on screen
+      statusText.textContent = 'Tap detected! #' + tapCounter;
+
+      // Double tap detection
+      if (timeDiff < 500 && timeDiff > 50) {
+        totalInteractions++;
+        console.log('*** DOUBLE TAP! ***');
+
+        // Update display with animation
+        statusText.textContent = 'DOUBLE TAP! Total: ' + totalInteractions;
+        interactionText.textContent = '*** DOUBLE TAP! ***';
+        interactionText.classList.add('double-tap');
+
+        // Visual feedback
+        setTimeout(() => {
+          interactionText.textContent = 'Try again!';
+          interactionText.classList.remove('double-tap');
+        }, 1000);
+
+        lastTapTime = 0;
+      } else {
+        lastTapTime = currentTime;
+      }
+    }, true);
+
+    // Initial status message
+    statusText.textContent = 'Scan the first marker (milky)';
+    interactionText.textContent = 'Interactive AR Experience Ready!';
+
+    // ======= SCENARIO 6: Continuous Stats Display =======
+    setInterval(() => {
+      if (firstMarkerScanned || secondMarkerUnlocked) {
+        console.log('Total Interactions:', totalInteractions);
+        console.log('First Marker:', firstMarkerScanned);
+        console.log('Second Marker Unlocked:', secondMarkerUnlocked);
+      }
+    }, 5000);
   });
-  </script>
-</head>
-<body>
-  <!-- HUD -->
-  <div class="hud" id="hud">
-    <button id="btn-rot-l">⟲</button>
-    <button id="btn-rot-r">⟳</button>
-    <button id="btn-scale--">−</button>
-    <button id="btn-scale-+">＋</button>
-    <button id="btn-color">🎨</button>
+</script>
+
+<!-- style for the loader -->
+<style>
+  .arjs-loader {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .arjs-loader div {
+    text-align: center;
+    font-size: 1.25em;
+    color: white;
+  }
+
+  /* Interactive AR UI Overlay */
+  #ar-ui {
+    position: fixed;
+    top: 10px;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    pointer-events: none;
+    text-align: center;
+    font-family: Arial, sans-serif;
+  }
+
+  #status-text-html {
+    background: rgba(255, 255, 0, 0.8);
+    color: black;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+
+  #interaction-text-html {
+    background: rgba(0, 255, 0, 0.8);
+    color: black;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+    display: inline-block;
+  }
+
+  #interaction-text-html.double-tap {
+    background: rgba(255, 0, 255, 0.9);
+    color: white;
+    font-size: 22px;
+    animation: pulse 0.5s;
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.2);
+    }
+  }
+</style>
+
+<body style="margin : 0px; overflow: hidden;">
+  <!-- AR UI Overlay -->
+  <div id="ar-ui">
+    <div id="status-text-html">Tap anywhere to test!</div>
+    <br>
+    <div id="interaction-text-html">Double tap for interaction</div>
   </div>
 
-  <a-scene
-    embedded
-    renderer="colorManagement: true; physicallyCorrectLights: true"
-    xr-mode-ui="enabled: false"
-    arjs="sourceType: webcam; detectionMode: mono; debugUIEnabled: false">
+  <!-- minimal loader shown until image descriptors are loaded. Loading may take a while according to the device computational power -->
+  <div class="arjs-loader">
+    <div>Loading, please wait...</div>
+  </div>
 
-    <!-- Cursor ray for mouse/touch (A-Frame builds a raycaster object3D for us) -->
-    <a-entity id="ray" cursor="rayOrigin: mouse" raycaster="objects: .raytarget"></a-entity>
+  <!-- a-frame scene -->
+  <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth: 640; sourceHeight: 480; displayWidth: 640; displayHeight: 480;">
+    <!-- FIRST NFT MARKER: milky -->
+    <a-nft id="first-marker" type="nft" url="./vangogh" smooth="true" smoothCount="20" smoothTolerance="0.5"
+      smoothThreshold="2">
+      <!-- First object 3D model with tap interaction -->
+      <a-entity id="first-model" gltf-model="vincent.gltf" scale="100 100 100" position="0 0 0" rotation="0 0 0"
+        tap-listener class="interactive">
+      </a-entity>
+    </a-nft>
 
-    <!-- Lights -->
-    <a-entity light="type: ambient; intensity: 0.8"></a-entity>
-    <a-entity light="type: directional; intensity: 0.6" position="0 1 1"></a-entity>
+    <!-- SECOND NFT MARKER: booksign (initially hidden) -->
+    <a-nft id="second-marker" type="nft" url="./starrynight" smooth="true" smoothCount="20" smoothTolerance="0.5"
+      smoothThreshold="2" visible="false">
+      <!-- Second object 3D model - Griffin with tap interaction -->
+      <a-entity id="scene-model" gltf-model="scene.gltf" scale="50 50 50" position="0 0 0" rotation="0 0 0" tap-listener
+        class="interactive">
+      </a-entity>
+      <!-- Debug red box to verify marker tracking and color interaction -->
+      <a-box id="debug-box" color="red" width="50" height="50" depth="50" position="0 25 0" opacity="0.5" tap-listener
+        class="interactive"></a-box>
+    </a-nft>
 
-    <!-- Marker -->
-    <a-marker preset="hiro" id="marker">
+    <!-- Status text displayed on screen -->
+    <a-entity position="0 0 -2">
+      <a-text id="status-text" value="Tap anywhere to test!" color="yellow" position="0 0.3 0" align="center" width="3"
+        wrap-count="40"></a-text>
 
-      <!-- Invisible drag plane anchored to marker -->
-      <a-plane id="dragplane" class="raytarget"
-               position="0 0 0" rotation="-90 0 0" width="2" height="2"
-               material="color: #000; opacity: 0; transparent: true"></a-plane>
-
-      <!-- Interactive object -->
-      <a-box id="cube" class="raytarget"
-             position="0 0.25 0" depth="0.5" height="0.5" width="0.5"
-             material="metalness:0.1; roughness:0.6; color:#4CC3D9"
-             tap-gestures spin-toggle
-             drag-on-plane="plane: #dragplane; yOffset: 0.25; radius: 0.6"
-             pinch-scale twist-rotate>
-      </a-box>
-
-      <!-- Marker center dot (optional) -->
-      <a-cylinder radius="0.01" height="0.001" color="#888"></a-cylinder>
-    </a-marker>
-
+      <!-- Interaction feedback text -->
+      <a-text id="interaction-text" value="Double tap for interaction" color="#00FF00" position="0 -0.3 0"
+        align="center" width="3" wrap-count="40"></a-text>
+    </a-entity>
+    <!-- static camera that moves according to the device movemenents -->
     <a-entity camera></a-entity>
   </a-scene>
 
-  <script>
-    const hud  = document.getElementById('hud');
-    const cube = document.getElementById('cube');
+  <!-- a-frame scene -->
+  <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth: 640; sourceHeight: 480; displayWidth: 640; displayHeight: 480;">
+    <!-- FIRST NFT MARKER: milky -->
+    <a-nft id="first-marker" type="nft" url="./vangogh" smooth="true" smoothCount="20" smoothTolerance="0.5"
+      smoothThreshold="2">
+      <!-- First object 3D model with tap interaction -->
+      <a-entity id="first-model" gltf-model="vincent.gltf" scale="100 100 100" position="0 0 0" rotation="0 0 0"
+        tap-listener class="interactive">
+      </a-entity>
+    </a-nft>
 
-    // Buttons
-    document.getElementById('btn-rot-l').addEventListener('click', () => nudgeRot(-15));
-    document.getElementById('btn-rot-r').addEventListener('click', () => nudgeRot( 15));
-    function nudgeRot(delta){
-      const r = cube.getAttribute('rotation');
-      cube.setAttribute('rotation', {x:r.x, y:r.y + delta, z:r.z});
-    }
+    <!-- SECOND NFT MARKER: booksign (initially hidden) -->
+    <a-nft id="second-marker" type="nft" url="./starrynight" smooth="true" smoothCount="20" smoothTolerance="0.5"
+      smoothThreshold="2" visible="false">
+      <!-- Second object 3D model - Griffin with tap interaction -->
+      <a-entity id="scene-model" gltf-model="scene.gltf" scale="50 50 50" position="0 0 0" rotation="0 0 0" tap-listener
+        class="interactive">
+      </a-entity>
+      <!-- Debug red box to verify marker tracking and color interaction -->
+      <a-box id="debug-box" color="red" width="50" height="50" depth="50" position="0 25 0" opacity="0.5" tap-listener
+        class="interactive"></a-box>
+    </a-nft>
 
-    document.getElementById('btn-scale--').addEventListener('click', () => nudgeScale(0.9));
-    document.getElementById('btn-scale-+').addEventListener('click', () => nudgeScale(1.1));
-    function nudgeScale(mult){
-      const s = cube.getAttribute('scale');
-      cube.setAttribute('scale', {
-        x: clamp(s.x * mult, 0.2, 3),
-        y: clamp(s.y * mult, 0.2, 3),
-        z: clamp(s.z * mult, 0.2, 3)
-      });
-    }
+    <!-- Status text displayed on screen -->
+    <a-entity position="0 0 -2">
+      <a-text id="status-text" value="Tap anywhere to test!" color="yellow" position="0 0.3 0" align="center" width="3"
+        wrap-count="40"></a-text>
 
-    document.getElementById('btn-color').addEventListener('click', () => cube.emit('random-color'));
-
-    // Gesture hooks
-    cube.addEventListener('tap',       () => cube.emit('toggle-spin'));        // single tap: spin on/off
-    cube.addEventListener('doubletap', () => cube.emit('random-color'));       // double tap: recolor
-    cube.addEventListener('longpress', () => hud.classList.toggle('hidden'));  // long press: show/hide HUD
-  </script>
+      <!-- Interaction feedback text -->
+      <a-text id="interaction-text" value="Double tap for interaction" color="#00FF00" position="0 -0.3 0"
+        align="center" width="3" wrap-count="40"></a-text>
+    </a-entity>
+    <!-- static camera that moves according to the device movemenents -->
+    <a-entity camera></a-entity>
+  </a-scene>
 </body>
-</html>
