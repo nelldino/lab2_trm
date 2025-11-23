@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AR NFT – Van Gogh Journey (Debug)</title>
+  <title>AR NFT – Van Gogh Journey</title>
 
   <script src="https://aframe.io/releases/0.9.2/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar-nft.js"></script>
@@ -71,6 +71,11 @@
       top: 104px;
       background: #ff9800;
     }
+
+    #create-test-box {
+      top: 150px;
+      background: #e91e63;
+    }
   </style>
 </head>
 
@@ -81,7 +86,7 @@
   <button id="start-camera" class="button">Start Camera</button>
   <button id="toggle-models" class="button">Toggle Models</button>
   <button id="test-models" class="button">Test Models</button>
-  <button id="create-test-box" class="button" style="top: 150px; background: #e91e63;">Create Test Box</button>
+  <button id="create-test-box" class="button">Create Test Box</button>
 
   <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" embedded
     arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true; sourceWidth: 1280; sourceHeight: 720; canvasWidth: 1280; canvasHeight: 720;">
@@ -90,30 +95,33 @@
     <a-nft id="vangogh-marker" type="nft" url="./vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01"
       smoothThreshold="5">
 
-      <!-- Fallback: simple box if GLTF doesn't load -->
-      <a-box id="vincentFallback" color="#4CC3D9" depth="0.5" height="1" width="0.5" position="0 0.5 0"
-        visible="false"></a-box>
-
-      <a-entity id="vincentModel" gltf-model="./vincent.gltf" scale="1 1 1" position="0 0 0" rotation="0 0 0"
-        visible="false"></a-entity>
+      <!-- Van Gogh figure generated via code -->
+      <a-entity id="vincentModel" visible="false" position="0 0 0">
+        <a-cylinder color="#ffcc99" height="1" radius="0.2" position="0 0.5 0"></a-cylinder> <!-- body -->
+        <a-sphere color="#ffe0bd" radius="0.2" position="0 1.2 0"></a-sphere> <!-- head -->
+        <a-box color="#8B4513" depth="0.1" height="0.5" width="0.1" position="-0.25 0.75 0"></a-box> <!-- left arm -->
+        <a-box color="#8B4513" depth="0.1" height="0.5" width="0.1" position="0.25 0.75 0"></a-box> <!-- right arm -->
+        <a-box color="#654321" depth="0.1" height="0.5" width="0.1" position="-0.1 0 0"></a-box> <!-- left leg -->
+        <a-box color="#654321" depth="0.1" height="0.5" width="0.1" position="0.1 0 0"></a-box> <!-- right leg -->
+      </a-entity>
     </a-nft>
 
     <!-- NFT #2 — Starry Night -->
     <a-nft id="starry-marker" type="nft" url="./starrynight" smooth="true" smoothCount="10" smoothTolerance="0.01"
       smoothThreshold="5">
 
-      <a-box id="starryFallback" color="#EF2D5E" depth="0.5" height="1" width="0.5" position="0 0.5 0"
-        visible="false"></a-box>
-
-      <a-entity id="starryScene" gltf-model="./scene.gltf" scale="1 1 1" position="0 0 0" rotation="0 0 0"
-        visible="false"></a-entity>
+      <a-entity id="starryScene" visible="false">
+        <!-- Sky background -->
+        <a-sphere color="#001133" radius="5" position="0 2 0" segments-height="18" segments-width="36"
+          material="side: back"></a-sphere>
+        <a-entity id="stars"></a-entity>
+      </a-entity>
     </a-nft>
 
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // Debug logger
     const debugPanel = document.getElementById('debug-panel');
     function debugLog(msg) {
       console.log(msg);
@@ -122,12 +130,8 @@
       debugPanel.scrollTop = debugPanel.scrollHeight;
     }
 
-    // State
     let hasScannedVangogh = false;
-    let vincentLoaded = false;
-    let starryLoaded = false;
 
-    // Show message
     function showMessage(text, duration = 2000) {
       const msg = document.getElementById("message");
       msg.innerHTML = text;
@@ -135,151 +139,34 @@
       setTimeout(() => msg.style.display = "none", duration);
     }
 
-    // Check if files exist
-    async function checkFiles() {
-      debugLog('Checking model files...');
-
-      const files = [
-        './vincent.gltf',
-        './scene.gltf',
-        './vangogh.fset',
-        './vangogh.fset3',
-        './vangogh.iset',
-        './starrynight.fset',
-        './starrynight.fset3',
-        './starrynight.iset'
-      ];
-
-      for (const file of files) {
-        try {
-          const response = await fetch(file, { method: 'HEAD' });
-          debugLog(`${file}: ${response.ok ? '✓ OK' : '✗ NOT FOUND'}`);
-        } catch (err) {
-          debugLog(`${file}: ✗ ERROR - ${err.message}`);
-        }
-      }
-    }
-
-    // Van Gogh marker events
+    // Marker events
     document.querySelector("#vangogh-marker").addEventListener("markerFound", () => {
       debugLog('✓ Van Gogh marker found');
       hasScannedVangogh = true;
-
-      const vincent = document.querySelector("#vincentModel");
-      const fallback = document.querySelector("#vincentFallback");
-
-      if (vincentLoaded) {
-        vincent.setAttribute("visible", true);
-        debugLog('Vincent model shown');
-      } else {
-        fallback.setAttribute("visible", true);
-        debugLog('Vincent fallback shown (model not loaded)');
-      }
-
+      document.getElementById("vincentModel").setAttribute("visible", true);
       showMessage("You met the artist. The painting is now unlocked.");
     });
 
     document.querySelector("#vangogh-marker").addEventListener("markerLost", () => {
       debugLog('Van Gogh marker lost');
-      document.querySelector("#vincentModel").setAttribute("visible", false);
-      document.querySelector("#vincentFallback").setAttribute("visible", false);
+      document.getElementById("vincentModel").setAttribute("visible", false);
     });
 
-    // Starry Night marker events
     document.querySelector("#starry-marker").addEventListener("markerFound", () => {
       debugLog('✓ Starry Night marker found');
-
       if (!hasScannedVangogh) {
         showMessage("Meet the artist first.");
         debugLog('Blocked: Van Gogh not scanned yet');
         return;
       }
-
-      const starry = document.querySelector("#starryScene");
-      const fallback = document.querySelector("#starryFallback");
-
-      if (starryLoaded) {
-        starry.setAttribute("visible", true);
-        debugLog('Starry model shown');
-      } else {
-        fallback.setAttribute("visible", true);
-        debugLog('Starry fallback shown (model not loaded)');
-      }
-
+      document.getElementById("starryScene").setAttribute("visible", true);
       showMessage("Welcome to Starry Night.");
     });
 
     document.querySelector("#starry-marker").addEventListener("markerLost", () => {
       debugLog('Starry Night marker lost');
-      document.querySelector("#starryScene").setAttribute("visible", false);
-      document.querySelector("#starryFallback").setAttribute("visible", false);
+      document.getElementById("starryScene").setAttribute("visible", false);
     });
-
-    // Model loading events
-    const vincent = document.querySelector('#vincentModel');
-    const starry = document.querySelector('#starryScene');
-
-    if (vincent) {
-      vincent.addEventListener('model-loaded', (e) => {
-        vincentLoaded = true;
-        debugLog('✓ Vincent model loaded successfully');
-        fitModelToMarker(vincent, 0.6);
-      });
-
-      vincent.addEventListener('model-error', (e) => {
-        debugLog('✗ Vincent model ERROR: ' + (e.detail || 'unknown'));
-        showMessage('Vincent model failed to load');
-      });
-    }
-
-    if (starry) {
-      starry.addEventListener('model-loaded', (e) => {
-        starryLoaded = true;
-        debugLog('✓ Starry model loaded successfully');
-        fitModelToMarker(starry, 0.9);
-      });
-
-      starry.addEventListener('model-error', (e) => {
-        debugLog('✗ Starry model ERROR: ' + (e.detail || 'unknown'));
-        showMessage('Starry model failed to load');
-      });
-    }
-
-    // Fit model to marker
-    function fitModelToMarker(entity, desiredMeters = 0.8) {
-      try {
-        const obj = entity.object3D;
-        if (!obj) {
-          debugLog('⚠ No object3D on ' + entity.id);
-          return;
-        }
-
-        if (typeof THREE === 'undefined') {
-          debugLog('⚠ THREE.js not available');
-          return;
-        }
-
-        const bbox = new THREE.Box3().setFromObject(obj);
-        const size = new THREE.Vector3();
-        bbox.getSize(size);
-        const maxDim = Math.max(size.x, size.y, size.z);
-
-        if (maxDim === 0) {
-          debugLog('⚠ Model has zero size: ' + entity.id);
-          return;
-        }
-
-        const scale = desiredMeters / maxDim;
-        entity.setAttribute('scale', `${scale} ${scale} ${scale}`);
-
-        const minY = bbox.min.y;
-        entity.object3D.position.y = -minY * scale;
-
-        debugLog(`Fitted ${entity.id}: scale=${scale.toFixed(3)}, size=${maxDim.toFixed(2)}`);
-      } catch (err) {
-        debugLog('✗ fitModelToMarker error: ' + err.message);
-      }
-    }
 
     // Camera start button
     document.getElementById('start-camera').addEventListener('click', () => {
@@ -288,19 +175,9 @@
         debugLog('✗ Camera API not available');
         return;
       }
-
       debugLog('Requesting camera permission...');
       showMessage('Requesting camera permission...');
-
-      const constraints = {
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      };
-
-      navigator.mediaDevices.getUserMedia(constraints)
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
         .then(stream => {
           stream.getTracks().forEach(t => t.stop());
           showMessage('Camera permission granted. AR should start.');
@@ -315,96 +192,41 @@
 
     // Toggle models button
     document.getElementById('toggle-models').addEventListener('click', () => {
-      const v = document.getElementById('vincentModel');
-      const s = document.getElementById('starryScene');
-      const vf = document.getElementById('vincentFallback');
-      const sf = document.getElementById('starryFallback');
-
-      const newVis = v.getAttribute('visible') !== 'true';
-
-      v.setAttribute('visible', newVis);
-      s.setAttribute('visible', newVis);
-      vf.setAttribute('visible', newVis);
-      sf.setAttribute('visible', newVis);
-
+      const vincent = document.getElementById('vincentModel');
+      const starry = document.getElementById('starryScene');
+      const newVis = vincent.getAttribute('visible') !== 'true';
+      vincent.setAttribute('visible', newVis);
+      starry.setAttribute('visible', newVis);
       debugLog(`Toggled visibility: ${newVis}`);
     });
 
     // Test models button - force show without markers
     document.getElementById('test-models').addEventListener('click', () => {
-      debugLog('Testing model visibility...');
-
-      const scene = document.querySelector('a-scene');
-      const camera = document.querySelector('[camera]');
-
-      if (!camera) {
-        debugLog('✗ Camera not found');
-        showMessage('Camera not initialized', 2000);
-        return;
-      }
-
-      const v = document.getElementById('vincentModel');
-      const s = document.getElementById('starryScene');
-      const vf = document.getElementById('vincentFallback');
-      const sf = document.getElementById('starryFallback');
-
-      // Temporarily detach from markers and attach to scene
-      const vParent = v.parentNode;
-      const sParent = s.parentNode;
-      const vfParent = vf.parentNode;
-      const sfParent = sf.parentNode;
-
-      // Get camera position
-      const cameraPos = camera.object3D.position;
-      const cameraRot = camera.object3D.rotation;
-
-      debugLog(`Camera at: ${cameraPos.x.toFixed(2)}, ${cameraPos.y.toFixed(2)}, ${cameraPos.z.toFixed(2)}`);
-
-      // Position in front of camera
-      if (vincentLoaded) {
-        v.object3D.position.set(cameraPos.x - 0.5, cameraPos.y, cameraPos.z - 2);
-        v.object3D.rotation.set(0, cameraRot.y, 0);
-        v.setAttribute('visible', true);
-        v.setAttribute('scale', '0.5 0.5 0.5');
-        debugLog('Vincent model positioned in world space');
-      } else {
-        vf.object3D.position.set(cameraPos.x - 0.5, cameraPos.y, cameraPos.z - 2);
-        vf.object3D.rotation.set(0, cameraRot.y, 0);
-        vf.setAttribute('visible', true);
-        debugLog('Vincent fallback positioned in world space');
-      }
-
-      if (starryLoaded) {
-        s.object3D.position.set(cameraPos.x + 0.5, cameraPos.y, cameraPos.z - 2);
-        s.object3D.rotation.set(0, cameraRot.y, 0);
-        s.setAttribute('visible', true);
-        s.setAttribute('scale', '0.5 0.5 0.5');
-        debugLog('Starry model positioned in world space');
-      } else {
-        sf.object3D.position.set(cameraPos.x + 0.5, cameraPos.y, cameraPos.z - 2);
-        sf.object3D.rotation.set(0, cameraRot.y, 0);
-        sf.setAttribute('visible', true);
-        debugLog('Starry fallback positioned in world space');
-      }
-
-      showMessage('Models positioned in front of camera', 3000);
-
-      // Force render
-      scene.object3D.visible = true;
-      if (scene.renderer) {
-        scene.renderer.render(scene.object3D, camera.object3DMap.camera);
-      }
+      document.getElementById('vincentModel').setAttribute('visible', true);
+      document.getElementById('starryScene').setAttribute('visible', true);
+      showMessage('Models shown for testing', 2000);
     });
 
-    // Initialize
+    // Procedural stars
+    function createStars(numStars = 100) {
+      const starsParent = document.getElementById('stars');
+      for (let i = 0; i < numStars; i++) {
+        const star = document.createElement('a-sphere');
+        star.setAttribute('radius', Math.random() * 0.05 + 0.02);
+        star.setAttribute('color', '#ffff66');
+        star.setAttribute('position', {
+          x: (Math.random() - 0.5) * 4,
+          y: Math.random() * 3,
+          z: (Math.random() - 0.5) * -4
+        });
+        star.setAttribute('animation', `property: scale; dir: alternate; dur: ${Math.random() * 2000 + 1000}; loop: true; to: 1.5 1.5 1.5`);
+        starsParent.appendChild(star);
+      }
+    }
+
     window.addEventListener('load', () => {
       debugLog('Page loaded');
-      checkFiles();
-
-      const scene = document.querySelector('a-scene');
-      if (scene) {
-        debugLog('AR.js config: ' + scene.getAttribute('arjs'));
-      }
+      createStars(100);
     });
   </script>
 </body>
