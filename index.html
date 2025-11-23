@@ -2,13 +2,13 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AR NFT – Van Gogh & Starry Night</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR NFT – Van Gogh Journey</title>
 
-  <!-- A-Frame 1.4.x -->
+  <!-- A-Frame -->
   <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.4.2/dist/aframe.min.js"></script>
-  <!-- AR.js NFT build -->
+  <!-- AR.js NFT -->
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 
   <style>
@@ -20,7 +20,7 @@
       overflow: hidden;
     }
 
-    .arjs-loader {
+    .loader {
       position: absolute;
       top: 0;
       left: 0;
@@ -29,32 +29,45 @@
       background: rgba(0, 0, 0, 0.8);
       color: white;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       font-size: 1.2rem;
       z-index: 9999;
+    }
+
+    #message {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      color: white;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px;
+      border-radius: 6px;
+      font-family: sans-serif;
+      z-index: 1000;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="arjs-loader" id="loader">Loading AR NFT markers & models…</div>
+  <div class="loader" id="loader">Loading AR NFT markers & models…</div>
+  <div id="message">Scan Vincent first to start the journey.</div>
 
-  <a-scene embedded arjs="trackingMethod: best; debugUIEnabled: false;">
+  <a-scene embedded arjs="trackingMethod: best; debugUIEnabled: false; sourceType: webcam;">
 
     <a-assets>
       <a-asset-item id="vincent-model" src="/models/vincent.gltf"></a-asset-item>
       <a-asset-item id="starry-model" src="/models/scene.gltf"></a-asset-item>
     </a-assets>
 
-    <!-- Vincent marker -->
+    <!-- Vincent NFT marker -->
     <a-nft id="marker-vincent" type="nft" url="markers/vincent">
       <a-entity id="model-vincent" gltf-model="#vincent-model" scale="0.5 0.5 0.5" position="0 0 0" rotation="0 0 0"
         visible="false"></a-entity>
     </a-nft>
 
-    <!-- Starry Night marker -->
+    <!-- Starry Night NFT marker -->
     <a-nft id="marker-starry" type="nft" url="markers/starrynight">
       <a-entity id="model-starry" gltf-model="#starry-model" scale="0.5 0.5 0.5" position="0 0 0" rotation="0 0 0"
         visible="false"></a-entity>
@@ -65,7 +78,11 @@
 
   <script>
     const loader = document.getElementById('loader');
+    const message = document.getElementById('message');
 
+    let vincentScanned = false;
+
+    // Handle markers
     const markers = [
       { id: 'marker-vincent', model: 'model-vincent' },
       { id: 'marker-starry', model: 'model-starry' }
@@ -76,26 +93,34 @@
       const modelEl = document.getElementById(model);
 
       markerEl.addEventListener('markerFound', () => {
-        console.log(`${id} found`);
-        modelEl.setAttribute('visible', 'true');
+        console.log(id + ' found');
         loader.style.display = 'none';
+
+        // Show logic: Vincent first, then Starry
+        if (id === 'marker-vincent') {
+          modelEl.setAttribute('visible', 'true');
+          vincentScanned = true;
+          message.innerText = "Vincent scanned! Now find Starry Night.";
+        } else if (id === 'marker-starry') {
+          if (vincentScanned) {
+            modelEl.setAttribute('visible', 'true');
+            message.innerText = "Starry Night scanned! Journey complete. 🎨";
+          } else {
+            message.innerText = "You must scan Vincent first!";
+            modelEl.setAttribute('visible', 'false');
+          }
+        }
       });
 
       markerEl.addEventListener('markerLost', () => {
-        console.log(`${id} lost`);
-        modelEl.setAttribute('visible', 'false');
+        console.log(id + ' lost');
+        document.getElementById(model).setAttribute('visible', 'false');
       });
     });
 
-    // Fallback: hide loader after 10s in case video event doesn't fire
-    setTimeout(() => {
-      loader.style.display = 'none';
-    }, 10000);
-
-    // Optional: hide loader when AR.js video is ready
-    window.addEventListener('arjs-video-loaded', () => {
-      loader.style.display = 'none';
-    });
+    // Fallback to hide loader after 10s
+    setTimeout(() => { loader.style.display = 'none' }, 10000);
+    window.addEventListener('arjs-video-loaded', () => { loader.style.display = 'none' });
   </script>
 
 </body>
