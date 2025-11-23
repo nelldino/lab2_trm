@@ -4,71 +4,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AR.js NFT Example</title>
+  <title>AR NFT – Van Gogh & Starry Night</title>
 
   <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <!-- AR.js with NFT support -->
+
+  <!-- AR.js NFT build -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
 </head>
 
 <body style="margin: 0; overflow: hidden;">
-  <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
 
-    <!-- Global state to track marker scans -->
-    <a-entity id="globalState" starry-scanned="false" vangogh-scanned="false">
-    </a-entity>
+  <a-scene vr-mode-ui="enabled: false" embedded renderer="antialias: true; alpha: true;"
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
 
-    <!-- Starry Night Marker -->
-    <a-nft type="nft" url="markers/starrynight" smooth="true" smoothCount="10" smoothTolerance="0.01"
-      smoothThreshold="5" id="starryMarker">
-      <a-entity id="starryModel" gltf-model="models/scene.gltf" scale="0.5 0.5 0.5" rotation="0 180 0"
-        visible="true"></a-entity>
+    <!-- ================
+       MARKER 1 – STARRY NIGHT
+       ================ -->
+    <a-nft id="marker-starry" type="nft" url="./markers/starrynight" smooth="true" smoothCount="10"
+      smoothTolerance="0.01" smoothThreshold="5">
+      <!-- Starry Night 3D model -->
+      <a-entity id="model-starry" gltf-model="./models/starry.gltf" position="0 0 0" rotation="0 180 0"
+        scale="1.6 1.6 1.6"></a-entity>
     </a-nft>
 
-    <!-- Van Gogh Marker -->
-    <a-nft type="nft" url="markers/vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5"
-      id="vangoghMarker">
-      <a-entity id="vangoghModel" gltf-model="models/vincent.gltf" scale="0.5 0.5 0.5" rotation="0 180 0"
-        visible="false"></a-entity>
+    <!-- ================
+       MARKER 2 – VAN GOGH
+       ================ -->
+    <a-nft id="marker-vangogh" type="nft" url="./markers/vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01"
+      smoothThreshold="5">
+      <!-- Van Gogh 3D model -->
+      <a-entity id="model-vangogh" gltf-model="./models/vangogh.gltf" position="0 0 0" rotation="0 180 0"
+        scale="1.6 1.6 1.6"></a-entity>
     </a-nft>
 
+    <!-- Camera -->
     <a-entity camera></a-entity>
+
   </a-scene>
 
-  <script>
-    // Get entities
-    const starryMarker = document.querySelector('#starryMarker');
-    const vangoghMarker = document.querySelector('#vangoghMarker');
-    const starryModel = document.querySelector('#starryModel');
-    const vangoghModel = document.querySelector('#vangoghModel');
-    const globalState = document.querySelector('#globalState');
-
-    // Starry Night marker events
-    starryMarker.addEventListener('markerFound', () => {
-      starryModel.setAttribute('visible', 'true');
-      vangoghModel.setAttribute('visible', 'false');
-      globalState.setAttribute('starry-scanned', 'true');
-    });
-
-    starryMarker.addEventListener('markerLost', () => {
-      starryModel.setAttribute('visible', 'false');
-    });
-
-    // Van Gogh marker events
-    vangoghMarker.addEventListener('markerFound', () => {
-      // Only show if Starry Night was scanned before
-      if (globalState.getAttribute('starry-scanned') === 'true') {
-        vangoghModel.setAttribute('visible', 'true');
-        starryModel.setAttribute('visible', 'false');
-        globalState.setAttribute('vangogh-scanned', 'true');
-      }
-    });
-
-    vangoghMarker.addEventListener('markerLost', () => {
-      vangoghModel.setAttribute('visible', 'false');
-    });
-  </script>
 </body>
 
 </html>
