@@ -45,9 +45,9 @@
 
     // ======= SCENARIO 1: Sequential Marker Scanning =======
     firstNft.addEventListener('markerFound', function () {
-      console.log('First marker (milky) found!');
+      console.log('First marker (vangogh) found!');
 
-      // Show only the first model while its marker is found
+      // show only the first model while vangogh is detected
       const firstModelEl = document.querySelector('#first-model');
       const sceneModelEl = document.querySelector('#scene-model');
       const debugBoxEl = document.querySelector('#debug-box');
@@ -60,12 +60,12 @@
         secondMarkerUnlocked = true;
         totalInteractions++;
 
-        statusText.textContent = 'Scenario 1 Complete! Find booksign.';
+        statusText.textContent = 'Scenario 1 Complete! Find starrynight.';
         setTimeout(() => {
           interactionText.textContent = 'Tap the 3D model to interact!';
         }, 2000);
 
-        // Enable the second marker to become detectable when found
+        // Enable the second marker
         secondNft.setAttribute('visible', 'true');
       }
     });
@@ -127,9 +127,9 @@
     // Listen for tap event
     firstModel.addEventListener('tap', handleFirstModelInteraction);
 
-    // ======= SCENARIO 3: Griffin Model Interactions =======
+    // ======= SCENARIO 3: Second Marker (starrynight) Interactions =======
     secondNft.addEventListener('markerFound', function () {
-      console.log('Second marker (booksign) found!');
+      console.log('Second marker (starrynight) found!');
 
       const firstModelEl = document.querySelector('#first-model');
       const sceneModelEl = document.querySelector('#scene-model');
@@ -141,11 +141,11 @@
         if (debugBoxEl) debugBoxEl.setAttribute('visible', 'true');
         if (firstModelEl) firstModelEl.setAttribute('visible', 'false');
 
-        statusText.textContent = 'Scenario 2 Complete! Tap griffin!';
-        interactionText.textContent = 'Click the Griffin for animation!';
+        statusText.textContent = 'Scenario 2 Complete! Tap the model!';
+        interactionText.textContent = 'Tap the model for interaction!';
         totalInteractions++;
       } else {
-        interactionText.textContent = 'Scan first marker first!';
+        interactionText.textContent = 'Scan vangogh first!';
       }
     });
 
@@ -157,57 +157,34 @@
       if (debugBoxEl) debugBoxEl.setAttribute('visible', 'false');
     });
 
-    const griffinModel = document.querySelector('#griffin-model');
+    // Simple interactions for the second model and debug box (optional)
+    const sceneModel = document.querySelector('#scene-model');
     const debugBox = document.querySelector('#debug-box');
 
-    // Touch interaction on Griffin
-    const handleGriffinInteraction = function () {
+    const handleSceneInteraction = function () {
       if (!griffinAnimating) {
         griffinAnimating = true;
         totalInteractions++;
-        console.log('Griffin tapped! Total interactions:', totalInteractions);
-        interactionText.textContent = 'Griffin is flying!';
-
-        // Flying animation
-        griffinModel.setAttribute('animation__fly', {
-          property: 'position',
-          from: '0 0 0',
-          to: '0 100 0',
-          dur: 2000,
-          dir: 'alternate',
-          loop: 2,
-          easing: 'easeInOutSine'
-        });
-
-        // Rotation animation
-        griffinModel.setAttribute('animation__spin', {
-          property: 'rotation',
-          to: '0 360 0',
-          dur: 2000,
-          loop: 2,
-          easing: 'linear'
-        });
-
+        interactionText.textContent = 'Model interaction!';
         setTimeout(() => {
           griffinAnimating = false;
           interactionText.textContent = 'Tap again for more!';
-        }, 4000);
+        }, 1000);
       }
     };
 
-    griffinModel.addEventListener('tap', handleGriffinInteraction);
+    if (sceneModel) sceneModel.addEventListener('tap', handleSceneInteraction);
 
     // Touch interaction on debug box
     const handleBoxInteraction = function () {
       totalInteractions++;
-      console.log('Box tapped! Total:', totalInteractions);
       const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181'];
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
       debugBox.setAttribute('color', randomColor);
       interactionText.textContent = 'Box color changed! Total: ' + totalInteractions;
     };
 
-    debugBox.addEventListener('tap', handleBoxInteraction);
+    if (debugBox) debugBox.addEventListener('tap', handleBoxInteraction);
 
     // ======= SCENARIO 4: Proximity Detection =======
     let proximityTimer = 0;
@@ -222,7 +199,7 @@
     firstNft.addEventListener('markerLost', function () {
       clearInterval(proximityTimer);
       interactionText.textContent = 'Marker 1 lost!';
-      // hide first model when marker lost
+      // hide first model when vangogh is lost
       const firstModelEl = document.querySelector('#first-model');
       if (firstModelEl) firstModelEl.setAttribute('visible', 'false');
     });
@@ -266,7 +243,7 @@
     }, true);
 
     // Initial status message
-    statusText.textContent = 'Scan the first marker (milky)';
+    statusText.textContent = 'Scan the first marker (vangogh)';
     interactionText.textContent = 'Interactive AR Experience Ready!';
 
     // ======= SCENARIO 6: Continuous Stats Display =======
@@ -369,62 +346,25 @@
   <!-- a-frame scene -->
   <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded
     arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth: 640; sourceHeight: 480; displayWidth: 640; displayHeight: 480;">
-    <!-- FIRST NFT MARKER: milky -->
+    <!-- FIRST NFT MARKER: vangogh -->
     <a-nft id="first-marker" type="nft" url="./vangogh" smooth="true" smoothCount="20" smoothTolerance="0.5"
       smoothThreshold="2">
       <!-- First object 3D model with tap interaction -->
-      <a-entity id="first-model" gltf-model="vincent.gltf" scale="100 100 100" position="0 0 0" rotation="0 0 0"
-        tap-listener class="interactive">
+      <a-entity id="first-model" visible="false" gltf-model="vincent.gltf" scale="100 100 100" position="0 0 0"
+        rotation="0 0 0" tap-listener class="interactive">
       </a-entity>
     </a-nft>
 
-    <!-- SECOND NFT MARKER: booksign (initially hidden) -->
+    <!-- SECOND NFT MARKER: starrynight (initially hidden) -->
     <a-nft id="second-marker" type="nft" url="./starrynight" smooth="true" smoothCount="20" smoothTolerance="0.5"
       smoothThreshold="2" visible="false">
       <!-- Second object 3D model - Griffin with tap interaction -->
-      <a-entity id="scene-model" gltf-model="scene.gltf" scale="50 50 50" position="0 0 0" rotation="0 0 0" tap-listener
-        class="interactive">
+      <a-entity id="scene-model" visible="false" gltf-model="scene.gltf" scale="50 50 50" position="0 0 0"
+        rotation="0 0 0" tap-listener class="interactive">
       </a-entity>
       <!-- Debug red box to verify marker tracking and color interaction -->
-      <a-box id="debug-box" color="red" width="50" height="50" depth="50" position="0 25 0" opacity="0.5" tap-listener
-        class="interactive"></a-box>
-    </a-nft>
-
-    <!-- Status text displayed on screen -->
-    <a-entity position="0 0 -2">
-      <a-text id="status-text" value="Tap anywhere to test!" color="yellow" position="0 0.3 0" align="center" width="3"
-        wrap-count="40"></a-text>
-
-      <!-- Interaction feedback text -->
-      <a-text id="interaction-text" value="Double tap for interaction" color="#00FF00" position="0 -0.3 0"
-        align="center" width="3" wrap-count="40"></a-text>
-    </a-entity>
-    <!-- static camera that moves according to the device movemenents -->
-    <a-entity camera></a-entity>
-  </a-scene>
-
-  <!-- a-frame scene -->
-  <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth: 640; sourceHeight: 480; displayWidth: 640; displayHeight: 480;">
-    <!-- FIRST NFT MARKER: milky -->
-    <a-nft id="first-marker" type="nft" url="./vangogh" smooth="true" smoothCount="20" smoothTolerance="0.5"
-      smoothThreshold="2">
-      <!-- First object 3D model with tap interaction -->
-      <a-entity id="first-model" gltf-model="vincent.gltf" scale="100 100 100" position="0 0 0" rotation="0 0 0"
-        tap-listener class="interactive">
-      </a-entity>
-    </a-nft>
-
-    <!-- SECOND NFT MARKER: booksign (initially hidden) -->
-    <a-nft id="second-marker" type="nft" url="./starrynight" smooth="true" smoothCount="20" smoothTolerance="0.5"
-      smoothThreshold="2" visible="false">
-      <!-- Second object 3D model - Griffin with tap interaction -->
-      <a-entity id="scene-model" gltf-model="scene.gltf" scale="50 50 50" position="0 0 0" rotation="0 0 0" tap-listener
-        class="interactive">
-      </a-entity>
-      <!-- Debug red box to verify marker tracking and color interaction -->
-      <a-box id="debug-box" color="red" width="50" height="50" depth="50" position="0 25 0" opacity="0.5" tap-listener
-        class="interactive"></a-box>
+      <a-box id="debug-box" visible="false" color="red" width="50" height="50" depth="50" position="0 25 0"
+        opacity="0.5" tap-listener class="interactive"></a-box>
     </a-nft>
 
     <!-- Status text displayed on screen -->
