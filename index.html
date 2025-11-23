@@ -7,10 +7,9 @@
   <title>AR NFT – Van Gogh Journey</title>
 
   <!-- A-Frame -->
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-
-  <!-- AR.js with NFT support -->
-  <script src="https://cdn.jsdelivr.net/npm/arjs@3.3.2/aframe/build/aframe-ar-nft.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 
   <style>
     #message {
@@ -32,11 +31,16 @@
 
   <div id="message"></div>
 
+  <!-- Start camera button (user gesture required by some mobile browsers) -->
+  <button id="start-camera"
+    style="position:fixed;right:12px;top:12px;z-index:9999;padding:10px 14px;background:#1e88e5;color:#fff;border:none;border-radius:6px;font-size:16px">Start
+    Camera</button>
+
   <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" embedded
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true;">
 
     <!-- --- 1. NFT #1 — Van Gogh portrait --- -->
-    <a-nft id="vangogh-marker" type="nft" url=".vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01"
+    <a-nft id="vangogh-marker" type="nft" url="./vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01"
       smoothThreshold="5">
 
       <a-entity id="vincentModel" gltf-model="./vincent.gltf" scale="1 1 1" position="0 0 0" rotation="0 0 0"
@@ -47,7 +51,7 @@
 
 
     <!-- --- 2. NFT #2 — Starry Night --- -->
-    <a-nft id="starry-marker" type="nft" url="./starrynight" smooth="true" smoothCount="10" smoothTolerance="0.01"
+    <a-nft id="starry-marker" type="nft" url="./sta" smooth="true" smoothCount="10" smoothTolerance="0.01"
       smoothThreshold="5">
 
       <a-entity id="starryScene" gltf-model="./scene.gltf" scale="1 1 1" position="0 0 0" rotation="0 0 0"
@@ -81,6 +85,7 @@
     // NFT #1 — Van Gogh logic
     // ------------------------------
     document.querySelector("#vangogh-marker").addEventListener("markerFound", () => {
+      console.log('markerFound: vangogh-marker');
       hasScannedVangogh = true;
 
       const vincent = document.querySelector("#vincentModel");
@@ -90,6 +95,7 @@
     });
 
     document.querySelector("#vangogh-marker").addEventListener("markerLost", () => {
+      console.log('markerLost: vangogh-marker');
       document.querySelector("#vincentModel").setAttribute("visible", false);
     });
 
@@ -98,6 +104,7 @@
     // NFT #2 — Starry Night logic
     // ------------------------------
     document.querySelector("#starry-marker").addEventListener("markerFound", () => {
+      console.log('markerFound: starry-marker');
       if (!hasScannedVangogh) {
         // Block the Starry Night until portrait is scanned
         showMessage("Meet the artist first.");
@@ -111,8 +118,54 @@
     });
 
     document.querySelector("#starry-marker").addEventListener("markerLost", () => {
+      console.log('markerLost: starry-marker');
       document.querySelector("#starryScene").setAttribute("visible", false);
     });
+
+    // ------------------------------
+    // MODEL LOAD DIAGNOSTICS
+    // ------------------------------
+    const vincent = document.querySelector('#vincentModel');
+    const starry = document.querySelector('#starryScene');
+    if (vincent && vincent.addEventListener) {
+      vincent.addEventListener('model-loaded', (e) => { console.log('vincent model-loaded', e); });
+      vincent.addEventListener('error', (e) => { console.warn('vincent model error', e); showMessage('Error loading Vincent model.'); });
+    }
+    if (starry && starry.addEventListener) {
+      starry.addEventListener('model-loaded', (e) => { console.log('starry model-loaded', e); });
+      starry.addEventListener('error', (e) => { console.warn('starry model error', e); showMessage('Error loading Starry model.'); });
+    }
+
+    // ------------------------------
+    // USER-GESTURE CAMERA START (some browsers require user action)
+    // ------------------------------
+    const startBtn = document.getElementById('start-camera');
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showMessage('Camera not supported in this browser.');
+          return;
+        }
+
+        showMessage('Requesting camera permission...');
+        const constraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
+        navigator.mediaDevices.getUserMedia(constraints)
+          .then(stream => {
+            // Stop the probe tracks — AR.js will create its own stream. This call just triggers permission.
+            stream.getTracks().forEach(t => t.stop());
+            showMessage('Camera permission granted. AR should start.');
+            startBtn.style.display = 'none';
+            console.log('Camera permission granted via user gesture');
+          })
+          .catch(err => {
+            console.warn('getUserMedia error', err);
+            let msg = 'Camera permission denied or not available';
+            if (err && err.name) msg += ' (' + err.name + ')';
+            msg += '. Use Chrome on Android or HTTPS on iOS.';
+            showMessage(msg, 5000);
+          });
+      });
+    }
   </script>
 
 </body>
