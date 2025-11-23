@@ -87,11 +87,10 @@
   <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" embedded
     arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true; sourceWidth: 1280; sourceHeight: 720; canvasWidth: 1280; canvasHeight: 720;">
 
-    <!-- NFT #1 — Van Gogh portrait -->
+    <!-- VAN GOGH NFT -->
     <a-nft id="vangogh-marker" type="nft" url="./vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01"
       smoothThreshold="5">
 
-      <!-- Fallback: simple box if GLTF doesn't load -->
       <a-box id="vincentFallback" color="#4CC3D9" depth="0.5" height="1" width="0.5" position="0 0.5 0"
         visible="false"></a-box>
 
@@ -99,7 +98,7 @@
         visible="false"></a-entity>
     </a-nft>
 
-    <!-- NFT #2 — Starry Night -->
+    <!-- STARRY NIGHT NFT -->
     <a-nft id="starry-marker" type="nft" url="./starrynight" smooth="true" smoothCount="10" smoothTolerance="0.01"
       smoothThreshold="5">
 
@@ -114,7 +113,6 @@
   </a-scene>
 
   <script>
-    // Debug logger
     const debugPanel = document.getElementById('debug-panel');
     function debugLog(msg) {
       console.log(msg);
@@ -123,12 +121,10 @@
       debugPanel.scrollTop = debugPanel.scrollHeight;
     }
 
-    // State
     let hasScannedVangogh = false;
     let vincentLoaded = false;
     let starryLoaded = false;
 
-    // Show message
     function showMessage(text, duration = 2000) {
       const msg = document.getElementById("message");
       msg.innerHTML = text;
@@ -136,7 +132,9 @@
       setTimeout(() => msg.style.display = "none", duration);
     }
 
-    // Check if files exist
+    /* --------------------
+       FILE CHECK
+    -------------------- */
     async function checkFiles() {
       debugLog('Checking model files...');
 
@@ -155,14 +153,19 @@
         try {
           const response = await fetch(file, { method: 'HEAD' });
           debugLog(`${file}: ${response.ok ? '✓ OK' : '✗ NOT FOUND'}`);
-        } catch (err) {
-          debugLog(`${file}: ✗ ERROR - ${err.message}`);
+        } catch {
+          debugLog(`${file}: ERROR`);
         }
       }
     }
 
-    // Van Gogh marker events
-    document.querySelector("#vangogh-marker").addEventListener("markerFound", () => {
+    /* --------------------
+       MARKER EVENTS
+    -------------------- */
+    const vangoghMarker = document.querySelector("#vangogh-marker");
+    const starryMarker = document.querySelector("#starry-marker");
+
+    vangoghMarker.addEventListener("markerFound", () => {
       debugLog('✓ Van Gogh marker found');
       hasScannedVangogh = true;
 
@@ -171,28 +174,24 @@
 
       if (vincentLoaded) {
         vincent.setAttribute("visible", true);
-        debugLog('Vincent model shown');
       } else {
         fallback.setAttribute("visible", true);
-        debugLog('Vincent fallback shown (model not loaded)');
       }
 
       showMessage("You met the artist. The painting is now unlocked.");
     });
 
-    document.querySelector("#vangogh-marker").addEventListener("markerLost", () => {
+    vangoghMarker.addEventListener("markerLost", () => {
       debugLog('Van Gogh marker lost');
       document.querySelector("#vincentModel").setAttribute("visible", false);
       document.querySelector("#vincentFallback").setAttribute("visible", false);
     });
 
-    // Starry Night marker events
-    document.querySelector("#starry-marker").addEventListener("markerFound", () => {
+    starryMarker.addEventListener("markerFound", () => {
       debugLog('✓ Starry Night marker found');
 
       if (!hasScannedVangogh) {
         showMessage("Meet the artist first.");
-        debugLog('Blocked: Van Gogh not scanned yet');
         return;
       }
 
@@ -201,329 +200,132 @@
 
       if (starryLoaded) {
         starry.setAttribute("visible", true);
-        debugLog('Starry model shown');
       } else {
         fallback.setAttribute("visible", true);
-        debugLog('Starry fallback shown (model not loaded)');
       }
 
       showMessage("Welcome to Starry Night.");
     });
 
-    document.querySelector("#starry-marker").addEventListener("markerLost", () => {
+    starryMarker.addEventListener("markerLost", () => {
       debugLog('Starry Night marker lost');
       document.querySelector("#starryScene").setAttribute("visible", false);
       document.querySelector("#starryFallback").setAttribute("visible", false);
     });
 
-    // Model loading events
+    /* --------------------
+       MODEL LOADING
+    -------------------- */
     const vincent = document.querySelector('#vincentModel');
     const starry = document.querySelector('#starryScene');
 
-    if (vincent) {
-      vincent.addEventListener('model-loaded', (e) => {
-        vincentLoaded = true;
-        debugLog('✓ Vincent model loaded successfully');
+    vincent.addEventListener('model-loaded', () => {
+      vincentLoaded = true;
+      debugLog('✓ Vincent model loaded');
+    });
 
-        // Log model details
-        setTimeout(() => {
-          const obj = vincent.object3D;
-          if (obj) {
-            debugLog(`  Vincent visible: ${obj.visible}, children: ${obj.children.length}`);
-            const bbox = new THREE.Box3().setFromObject(obj);
-            const size = new THREE.Vector3();
-            bbox.getSize(size);
-            debugLog(`  Vincent size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
-          }
-        }, 100);
+    starry.addEventListener('model-loaded', () => {
+      starryLoaded = true;
+      debugLog('✓ Starry model loaded');
+    });
 
-        fitModelToMarker(vincent, 0.6);
-      });
-
-      vincent.addEventListener('model-error', (e) => {
-        debugLog('✗ Vincent model ERROR: ' + (e.detail || 'unknown'));
-        showMessage('Vincent model failed to load');
-      });
-    }
-
-    if (starry) {
-      starry.addEventListener('model-loaded', (e) => {
-        starryLoaded = true;
-        debugLog('✓ Starry model loaded successfully');
-
-        // Log model details
-        setTimeout(() => {
-          const obj = starry.object3D;
-          if (obj) {
-            debugLog(`  Starry visible: ${obj.visible}, children: ${obj.children.length}`);
-            const bbox = new THREE.Box3().setFromObject(obj);
-            const size = new THREE.Vector3();
-            bbox.getSize(size);
-            debugLog(`  Starry size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
-          }
-        }, 100);
-
-        fitModelToMarker(starry, 0.9);
-      });
-
-      starry.addEventListener('model-error', (e) => {
-        debugLog('✗ Starry model ERROR: ' + (e.detail || 'unknown'));
-        showMessage('Starry model failed to load');
-      });
-    }
-
-    // Fit model to marker
-    function fitModelToMarker(entity, desiredMeters = 0.8) {
-      try {
-        const obj = entity.object3D;
-        if (!obj) {
-          debugLog('⚠ No object3D on ' + entity.id);
-          return;
-        }
-
-        if (typeof THREE === 'undefined') {
-          debugLog('⚠ THREE.js not available');
-          return;
-        }
-
-        const bbox = new THREE.Box3().setFromObject(obj);
-        const size = new THREE.Vector3();
-        bbox.getSize(size);
-        const maxDim = Math.max(size.x, size.y, size.z);
-
-        if (maxDim === 0) {
-          debugLog('⚠ Model has zero size: ' + entity.id);
-          return;
-        }
-
-        const scale = desiredMeters / maxDim;
-        entity.setAttribute('scale', `${scale} ${scale} ${scale}`);
-
-        const minY = bbox.min.y;
-        entity.object3D.position.y = -minY * scale;
-
-        debugLog(`Fitted ${entity.id}: scale=${scale.toFixed(3)}, size=${maxDim.toFixed(2)}`);
-      } catch (err) {
-        debugLog('✗ fitModelToMarker error: ' + err.message);
-      }
-    }
-
-    // Camera start button
+    /* --------------------
+       CAMERA START BUTTON
+    -------------------- */
     document.getElementById('start-camera').addEventListener('click', () => {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showMessage('Camera not supported in this browser.');
-        debugLog('✗ Camera API not available');
-        return;
-      }
-
-      debugLog('Requesting camera permission...');
+      debugLog('Requesting camera...');
       showMessage('Requesting camera permission...');
 
-      const constraints = {
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      };
-
-      navigator.mediaDevices.getUserMedia(constraints)
+      navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => {
           stream.getTracks().forEach(t => t.stop());
-          showMessage('Camera permission granted. AR should start.');
+          showMessage("Camera ready");
           document.getElementById('start-camera').style.display = 'none';
-          debugLog('✓ Camera permission granted');
         })
-        .catch(err => {
-          debugLog('✗ Camera error: ' + err.name);
-          showMessage('Camera permission denied: ' + err.name, 5000);
+        .catch(() => {
+          showMessage("Camera permission denied", 4000);
         });
     });
 
-    // Toggle models button
+    /* --------------------
+       TOGGLE MODELS
+    -------------------- */
     document.getElementById('toggle-models').addEventListener('click', () => {
-      const v = document.getElementById('vincentModel');
-      const s = document.getElementById('starryScene');
-      const vf = document.getElementById('vincentFallback');
-      const sf = document.getElementById('starryFallback');
+      let v = document.getElementById('vincentModel');
+      let s = document.getElementById('starryScene');
+      let vf = document.getElementById('vincentFallback');
+      let sf = document.getElementById('starryFallback');
 
-      const newVis = v.getAttribute('visible') !== 'true';
+      let newVis = v.getAttribute('visible') !== 'true';
 
       v.setAttribute('visible', newVis);
       s.setAttribute('visible', newVis);
       vf.setAttribute('visible', newVis);
       sf.setAttribute('visible', newVis);
 
-      debugLog(`Toggled visibility: ${newVis}`);
+      debugLog(`Models set visible: ${newVis}`);
     });
 
-    // Test models button - force show without markers
+    /* --------------------
+       TEST MODELS
+    -------------------- */
     document.getElementById('test-models').addEventListener('click', () => {
-      debugLog('Testing model visibility...');
+      debugLog("Forcing models in front of camera...");
 
-      const scene = document.querySelector('a-scene');
-      const camera = document.querySelector('[camera]');
+      const camera = document.querySelector("[camera]").object3D;
 
-      if (!camera) {
-        debugLog('✗ Camera not found');
-        showMessage('Camera not initialized', 2000);
-        return;
-      }
+      const v = document.getElementById("vincentModel");
+      const s = document.getElementById("starryScene");
 
-      const v = document.getElementById('vincentModel');
-      const s = document.getElementById('starryScene');
-      const vf = document.getElementById('vincentFallback');
-      const sf = document.getElementById('starryFallback');
+      v.object3D.position.set(0, 0, -2);
+      v.setAttribute("visible", true);
 
-      // Temporarily detach from markers and attach to scene
-      const vParent = v.parentNode;
-      const sParent = s.parentNode;
-      const vfParent = vf.parentNode;
-      const sfParent = sf.parentNode;
+      s.object3D.position.set(1, 0, -2);
+      s.setAttribute("visible", true);
 
-      // Get camera position
-      const cameraPos = camera.object3D.position;
-      const cameraRot = camera.object3D.rotation;
-
-      debugLog(`Camera at: ${cameraPos.x.toFixed(2)}, ${cameraPos.y.toFixed(2)}, ${cameraPos.z.toFixed(2)}`);
-
-      // Position in front of camera
-      if (vincentLoaded) {
-        v.object3D.position.set(cameraPos.x - 0.5, cameraPos.y, cameraPos.z - 2);
-        v.object3D.rotation.set(0, cameraRot.y, 0);
-        v.setAttribute('visible', true);
-        v.setAttribute('scale', '0.5 0.5 0.5');
-        debugLog('Vincent model positioned in world space');
-      } else {
-        vf.object3D.position.set(cameraPos.x - 0.5, cameraPos.y, cameraPos.z - 2);
-        vf.object3D.rotation.set(0, cameraRot.y, 0);
-        vf.setAttribute('visible', true);
-        debugLog('Vincent fallback positioned in world space');
-      }
-
-      if (starryLoaded) {
-        s.object3D.position.set(cameraPos.x + 0.5, cameraPos.y, cameraPos.z - 2);
-        s.object3D.rotation.set(0, cameraRot.y, 0);
-        s.setAttribute('visible', true);
-        s.setAttribute('scale', '0.5 0.5 0.5');
-        debugLog('Starry model positioned in world space');
-      } else {
-        sf.object3D.position.set(cameraPos.x + 0.5, cameraPos.y, cameraPos.z - 2);
-        sf.object3D.rotation.set(0, cameraRot.y, 0);
-        sf.setAttribute('visible', true);
-        debugLog('Starry fallback positioned in world space');
-      }
-
-      showMessage('Models positioned in front of camera', 3000);
-
-      // Force render
-      scene.object3D.visible = true;
-      if (scene.renderer) {
-        scene.renderer.render(scene.object3D, camera.object3DMap.camera);
-      }
+      showMessage("Models placed in front of camera");
     });
 
-    // Create test box button - simple test without markers
+    /* --------------------
+       CREATE A TEST BOX
+    -------------------- */
     document.getElementById('create-test-box').addEventListener('click', () => {
-      debugLog('Creating test box directly in scene...');
+      debugLog("Creating test box...");
 
-      const scene = document.querySelector('a-scene');
-      const camera = document.querySelector('[camera]');
+      const scene = document.querySelector("a-scene");
 
-      if (!camera) {
-        debugLog('✗ Camera not found');
-        return;
-      }
-
-      // Create a simple box directly in the scene at eye level
-      const testBox = document.createElement('a-box');
-      testBox.setAttribute('position', '0 0 -2');
-      testBox.setAttribute('color', '#FF00FF');
-      testBox.setAttribute('width', '0.5');
-      testBox.setAttribute('height', '0.5');
-      testBox.setAttribute('depth', '0.5');
-      testBox.setAttribute('visible', true);
+      const testBox = document.createElement("a-box");
+      testBox.setAttribute("color", "#FF00FF");
+      testBox.setAttribute("width", "0.5");
+      testBox.setAttribute("height", "0.5");
+      testBox.setAttribute("depth", "0.5");
+      testBox.setAttribute("position", "0 0 -2");
 
       scene.appendChild(testBox);
 
-      debugLog('✓ Test box created at 0 0 -2 (eye level)');
-      showMessage('Pink box 2m ahead at eye level', 3000);
-
-      // Also log camera info
-      setTimeout(() => {
-        const pos = camera.object3D.position;
-        const rot = camera.object3D.rotation;
-        debugLog(`Camera pos: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`);
-        debugLog(`Camera rot: (${rot.x.toFixed(2)}, ${rot.y.toFixed(2)}, ${rot.z.toFixed(2)})`);
-      }, 100);
+      showMessage("Pink box created");
     });
 
-    // Force show models button - show fallback boxes at eye level
+    /* --------------------
+       FORCE SHOW FALLBACK
+    -------------------- */
     document.getElementById('force-show-models').addEventListener('click', () => {
-      debugLog('Force showing fallback boxes at eye level...');
+      debugLog("Showing fallback boxes...");
 
-      const scene = document.querySelector('a-scene');
-      const vf = document.getElementById('vincentFallback');
-      const sf = document.getElementById('starryFallback');
+      const scene = document.querySelector("a-scene");
 
-      // Remove from markers and add to scene
-      if (vf.parentNode) {
-        vf.parentNode.removeChild(vf);
-      }
-      if (sf.parentNode) {
-        sf.parentNode.removeChild(sf);
-      }
+      const vf = document.getElementById("vincentFallback");
+      const sf = document.getElementById("starryFallback");
 
-      // Reset and add to scene
-      vf.setAttribute('position', '-0.6 0 -2');
-      vf.setAttribute('scale', '1 1 1');
-      vf.setAttribute('visible', 'true');
+      vf.setAttribute("position", "-0.6 0 -2");
+      vf.setAttribute("visible", true);
       scene.appendChild(vf);
-      debugLog('Vincent fallback: blue box at -0.6 0 -2 (moved to scene)');
 
-      sf.setAttribute('position', '0.6 0 -2');
-      sf.setAttribute('scale', '1 1 1');
-      sf.setAttribute('visible', 'true');
+      sf.setAttribute("position", "0.6 0 -2");
+      sf.setAttribute("visible", true);
       scene.appendChild(sf);
-      debugLog('Starry fallback: red box at 0.6 0 -2 (moved to scene)');
 
-      showMessage('Fallback boxes moved to scene', 3000);
-
-      // Also try the actual models if loaded
-      if (vincentLoaded) {
-        const v = document.getElementById('vincentModel');
-        if (v.parentNode) {
-          v.parentNode.removeChild(v);
-        }
-        v.setAttribute('position', '-1.2 0 -2');
-        v.setAttribute('scale', '0.3 0.3 0.3');
-        v.setAttribute('visible', 'true');
-        scene.appendChild(v);
-        debugLog('Vincent model at -1.2 0 -2 (moved to scene)');
-      }
-
-      if (starryLoaded) {
-        const s = document.getElementById('starryScene');
-        if (s.parentNode) {
-          s.parentNode.removeChild(s);
-        }
-        s.setAttribute('position', '1.2 0 -2');
-        s.setAttribute('scale', '0.3 0.3 0.3');
-        s.setAttribute('visible', 'true');
-        scene.appendChild(s);
-        debugLog('Starry model at 1.2 0 -2 (moved to scene)');
-      }
-    });
-
-    // Initialize
-    window.addEventListener('load', () => {
-      debugLog('Page loaded');
-      checkFiles();
-
-      const scene = document.querySelector('a-scene');
-      if (scene) {
-        debugLog('AR.js config: ' + scene.getAttribute('arjs'));
-      }
+      showMessage("Fallback boxes visible");
     });
   </script>
 </body>
