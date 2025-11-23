@@ -462,37 +462,56 @@
     document.getElementById('force-show-models').addEventListener('click', () => {
       debugLog('Force showing fallback boxes at eye level...');
 
+      const scene = document.querySelector('a-scene');
       const vf = document.getElementById('vincentFallback');
       const sf = document.getElementById('starryFallback');
 
-      // Make fallback boxes bigger and position at eye level
+      // Remove from markers and add to scene
+      if (vf.parentNode) {
+        vf.parentNode.removeChild(vf);
+      }
+      if (sf.parentNode) {
+        sf.parentNode.removeChild(sf);
+      }
+
+      // Reset and add to scene
       vf.setAttribute('position', '-0.6 0 -2');
       vf.setAttribute('scale', '1 1 1');
       vf.setAttribute('visible', 'true');
-      debugLog('Vincent fallback: blue box at -0.6 0 -2');
+      scene.appendChild(vf);
+      debugLog('Vincent fallback: blue box at -0.6 0 -2 (moved to scene)');
 
       sf.setAttribute('position', '0.6 0 -2');
       sf.setAttribute('scale', '1 1 1');
       sf.setAttribute('visible', 'true');
-      debugLog('Starry fallback: red box at 0.6 0 -2');
+      scene.appendChild(sf);
+      debugLog('Starry fallback: red box at 0.6 0 -2 (moved to scene)');
 
-      showMessage('Fallback boxes shown at eye level', 3000);
+      showMessage('Fallback boxes moved to scene', 3000);
 
       // Also try the actual models if loaded
       if (vincentLoaded) {
         const v = document.getElementById('vincentModel');
+        if (v.parentNode) {
+          v.parentNode.removeChild(v);
+        }
         v.setAttribute('position', '-1.2 0 -2');
         v.setAttribute('scale', '0.3 0.3 0.3');
         v.setAttribute('visible', 'true');
-        debugLog('Vincent model at -1.2 0 -2');
+        scene.appendChild(v);
+        debugLog('Vincent model at -1.2 0 -2 (moved to scene)');
       }
 
       if (starryLoaded) {
         const s = document.getElementById('starryScene');
+        if (s.parentNode) {
+          s.parentNode.removeChild(s);
+        }
         s.setAttribute('position', '1.2 0 -2');
         s.setAttribute('scale', '0.3 0.3 0.3');
         s.setAttribute('visible', 'true');
-        debugLog('Starry model at 1.2 0 -2');
+        scene.appendChild(s);
+        debugLog('Starry model at 1.2 0 -2 (moved to scene)');
       }
     });
 
