@@ -14,7 +14,7 @@
 <body style="margin:0; overflow:hidden;">
 
   <a-scene vr-mode-ui="enabled: false" embedded renderer="logarithmicDepthBuffer: true;"
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true;">
 
     <a-assets>
       <!-- GLTF models placed in project root -->
@@ -47,6 +47,34 @@
 
   <script>
     (function () {
+      // Diagnostic: request higher-res/environment camera to improve image quality
+      (function cameraProbe() {
+        const statusEl = document.getElementById('status');
+        function setStatus(s) { if (statusEl) statusEl.textContent = s; }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.warn('getUserMedia not supported');
+          setStatus('Camera API not supported by this browser. Try Chrome on Android.');
+          return;
+        }
+
+        const constraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
+        navigator.mediaDevices.getUserMedia(constraints)
+          .then(stream => {
+            // stop immediately — this was just a probe to get permissions and preferred resolution
+            stream.getTracks().forEach(t => t.stop());
+            console.log('Camera probe succeeded with constraints', constraints);
+            setStatus('Camera available. Point at the Vangogh NFT.');
+          })
+          .catch(err => {
+            console.warn('Camera probe failed', err);
+            let friendly = 'Camera access denied or not available.';
+            if (err && err.name) friendly += ' (' + err.name + ')';
+            friendly += ' Check permissions, try Chrome on Android, or use HTTPS on iOS.';
+            setStatus(friendly);
+          });
+      })();
+
       const status = document.getElementById('status');
       const nftVincent = document.getElementById('nft-vincent');
       const nftStarry = document.getElementById('nft-starry');
@@ -73,12 +101,14 @@
 
       // Vincent marker events
       nftVincent.addEventListener('markerFound', () => {
+        console.log('markerFound: vangogh');
         scannedVincent = true;
         showOnly('vincent');
         showMessage('Vangogh scanned — you can now scan Starry Night.');
       });
 
       nftVincent.addEventListener('markerLost', () => {
+        console.log('markerLost: vangogh');
         // when lost, hide the model
         modelVincent.setAttribute('visible', 'false');
         showMessage('Vangogh marker lost.');
@@ -86,6 +116,7 @@
 
       // Starry marker events
       nftStarry.addEventListener('markerFound', () => {
+        console.log('markerFound: starrynight');
         if (!scannedVincent) {
           // refuse to show starry until vincent scanned
           showMessage('Scan Vangogh first before Starry Night.');
@@ -99,9 +130,35 @@
       });
 
       nftStarry.addEventListener('markerLost', () => {
+        console.log('markerLost: starrynight');
         modelStarry.setAttribute('visible', 'false');
         showMessage('Starry Night marker lost.');
       });
+
+      // Asset/model loading diagnostics
+      modelVincent.addEventListener && modelVincent.addEventListener('model-loaded', (e) => {
+        console.log('vincent model-loaded', e);
+      });
+      modelVincent.addEventListener && modelVincent.addEventListener('error', (e) => {
+        console.warn('vincent model error', e);
+        showMessage('Error loading Vincent model. Check console for details.');
+      });
+
+      modelStarry.addEventListener && modelStarry.addEventListener('model-loaded', (e) => {
+        console.log('starry model-loaded', e);
+      });
+      modelStarry.addEventListener && modelStarry.addEventListener('error', (e) => {
+        console.warn('starry model error', e);
+        showMessage('Error loading Starry model. Check console for details.');
+      });
+
+      // Asset loading: warn if a-assets did not load within a few seconds
+      const assetsEl = document.querySelector('a-assets');
+      if (assetsEl) {
+        let loaded = false;
+        assetsEl.addEventListener('loaded', () => { loaded = true; console.log('a-assets loaded'); });
+        setTimeout(() => { if (!loaded) console.warn('a-assets may not have finished loading'); }, 5000);
+      }
 
       // Safety: if both markers present, prefer the one that fired most recently
       // The event handlers above already toggle visibility so only one is visible.
