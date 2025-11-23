@@ -4,167 +4,117 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AR NFT: Vangogh & StarryNight</title>
+  <title>AR NFT – Van Gogh Journey</title>
+
   <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <!-- AR.js with NFT support for A-Frame -->
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+
+  <!-- AR.js with NFT support -->
+  <script src="https://cdn.jsdelivr.net/npm/arjs@3.3.2/aframe/build/aframe-ar-nft.js"></script>
+
+  <style>
+    #message {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border-radius: 8px;
+      font-size: 18px;
+      display: none;
+    }
+  </style>
 </head>
 
-<body style="margin:0; overflow:hidden;">
+<body style="margin: 0; overflow: hidden;">
 
-  <a-scene vr-mode-ui="enabled: false" embedded renderer="logarithmicDepthBuffer: true;"
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true;">
+  <div id="message"></div>
 
-    <a-assets>
-      <!-- GLTF models placed in project root -->
-      <a-asset-item id="vincent-gltf" src="vincent.gltf"></a-asset-item>
-      <a-asset-item id="scene-gltf" src="scene.gltf"></a-asset-item>
-    </a-assets>
+  <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
 
-    <!-- Light for models -->
-    <a-entity light="type: ambient; intensity: 0.6"></a-entity>
-    <a-entity light="type: directional; intensity: 0.8" position="0 1 0"></a-entity>
+    <!-- --- 1. NFT #1 — Van Gogh portrait --- -->
+    <a-nft id="vangogh-marker" type="nft" url="./assets/markers/vangogh" smooth="true" smoothCount="10"
+      smoothTolerance="0.01" smoothThreshold="5">
 
-    <!-- NFT marker for Vincent (vangogh) -->
-    <a-nft id="nft-vincent" type="nft" url="./vangogh" smooth="true">
-      <a-entity id="model-vincent" gltf-model="#vincent-gltf" scale="0.5 0.5 0.5" visible="false"></a-entity>
+      <a-entity id="vincentModel" gltf-model="./assets/models/vincent.gltf" scale="1 1 1" position="0 0 0"
+        rotation="0 0 0" visible="false">
+      </a-entity>
+
     </a-nft>
 
-    <!-- NFT marker for Starry Night (starrynight) -->
-    <a-nft id="nft-starry" type="nft" url="./starrynight" smooth="true">
-      <a-entity id="model-starry" gltf-model="#scene-gltf" scale="0.5 0.5 0.5" visible="false"></a-entity>
+
+    <!-- --- 2. NFT #2 — Starry Night --- -->
+    <a-nft id="starry-marker" type="nft" url="./assets/markers/starrynight" smooth="true" smoothCount="10"
+      smoothTolerance="0.01" smoothThreshold="5">
+
+      <a-entity id="starryScene" gltf-model="./assets/models/scene.gltf" scale="1 1 1" position="0 0 0" rotation="0 0 0"
+        visible="false">
+      </a-entity>
+
     </a-nft>
 
-    <!-- Camera -->
+
     <a-entity camera></a-entity>
   </a-scene>
 
-  <div id="ui"
-    style="position:fixed;left:8px;top:8px;z-index:999;color:#fff;font-family:Arial,Helvetica,sans-serif;text-shadow:0 0 6px #000">
-    <div id="status">Scan the Vangogh NFT to start.</div>
-  </div>
 
   <script>
-    (function () {
-      // Diagnostic: request higher-res/environment camera to improve image quality
-      (function cameraProbe() {
-        const statusEl = document.getElementById('status');
-        function setStatus(s) { if (statusEl) statusEl.textContent = s; }
+    // ------------------------------
+    // STATE VARIABLES
+    // ------------------------------
+    let hasScannedVangogh = false;
 
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          console.warn('getUserMedia not supported');
-          setStatus('Camera API not supported by this browser. Try Chrome on Android.');
-          return;
-        }
+    // ------------------------------
+    // UTILITY: show message
+    // ------------------------------
+    function showMessage(text, duration = 2000) {
+      const msg = document.getElementById("message");
+      msg.innerHTML = text;
+      msg.style.display = "block";
+      setTimeout(() => msg.style.display = "none", duration);
+    }
 
-        const constraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
-        navigator.mediaDevices.getUserMedia(constraints)
-          .then(stream => {
-            // stop immediately — this was just a probe to get permissions and preferred resolution
-            stream.getTracks().forEach(t => t.stop());
-            console.log('Camera probe succeeded with constraints', constraints);
-            setStatus('Camera available. Point at the Vangogh NFT.');
-          })
-          .catch(err => {
-            console.warn('Camera probe failed', err);
-            let friendly = 'Camera access denied or not available.';
-            if (err && err.name) friendly += ' (' + err.name + ')';
-            friendly += ' Check permissions, try Chrome on Android, or use HTTPS on iOS.';
-            setStatus(friendly);
-          });
-      })();
+    // ------------------------------
+    // NFT #1 — Van Gogh logic
+    // ------------------------------
+    document.querySelector("#vangogh-marker").addEventListener("markerFound", () => {
+      hasScannedVangogh = true;
 
-      const status = document.getElementById('status');
-      const nftVincent = document.getElementById('nft-vincent');
-      const nftStarry = document.getElementById('nft-starry');
-      const modelVincent = document.getElementById('model-vincent');
-      const modelStarry = document.getElementById('model-starry');
+      const vincent = document.querySelector("#vincentModel");
+      vincent.setAttribute("visible", true);
 
-      // Rule: starry cannot appear until vangogh has been scanned at least once
-      let scannedVincent = false;
+      showMessage("You met the artist. The painting is now unlocked.");
+    });
 
-      function showMessage(text) {
-        status.textContent = text;
+    document.querySelector("#vangogh-marker").addEventListener("markerLost", () => {
+      document.querySelector("#vincentModel").setAttribute("visible", false);
+    });
+
+
+    // ------------------------------
+    // NFT #2 — Starry Night logic
+    // ------------------------------
+    document.querySelector("#starry-marker").addEventListener("markerFound", () => {
+      if (!hasScannedVangogh) {
+        // Block the Starry Night until portrait is scanned
+        showMessage("Meet the artist first.");
+        return;
       }
 
-      // Helper to show only one model at a time
-      function showOnly(modelToShow) {
-        if (modelToShow === 'vincent') {
-          modelVincent.setAttribute('visible', 'true');
-          modelStarry.setAttribute('visible', 'false');
-        } else if (modelToShow === 'starry') {
-          modelStarry.setAttribute('visible', 'true');
-          modelVincent.setAttribute('visible', 'false');
-        }
-      }
+      const starry = document.querySelector("#starryScene");
+      starry.setAttribute("visible", true);
 
-      // Vincent marker events
-      nftVincent.addEventListener('markerFound', () => {
-        console.log('markerFound: vangogh');
-        scannedVincent = true;
-        showOnly('vincent');
-        showMessage('Vangogh scanned — you can now scan Starry Night.');
-      });
+      showMessage("Welcome to Starry Night.");
+    });
 
-      nftVincent.addEventListener('markerLost', () => {
-        console.log('markerLost: vangogh');
-        // when lost, hide the model
-        modelVincent.setAttribute('visible', 'false');
-        showMessage('Vangogh marker lost.');
-      });
-
-      // Starry marker events
-      nftStarry.addEventListener('markerFound', () => {
-        console.log('markerFound: starrynight');
-        if (!scannedVincent) {
-          // refuse to show starry until vincent scanned
-          showMessage('Scan Vangogh first before Starry Night.');
-          // ensure starry remains hidden
-          modelStarry.setAttribute('visible', 'false');
-          return;
-        }
-        // allow switch: show starry and hide vincent
-        showOnly('starry');
-        showMessage('Starry Night scanned — showing Starry Night model.');
-      });
-
-      nftStarry.addEventListener('markerLost', () => {
-        console.log('markerLost: starrynight');
-        modelStarry.setAttribute('visible', 'false');
-        showMessage('Starry Night marker lost.');
-      });
-
-      // Asset/model loading diagnostics
-      modelVincent.addEventListener && modelVincent.addEventListener('model-loaded', (e) => {
-        console.log('vincent model-loaded', e);
-      });
-      modelVincent.addEventListener && modelVincent.addEventListener('error', (e) => {
-        console.warn('vincent model error', e);
-        showMessage('Error loading Vincent model. Check console for details.');
-      });
-
-      modelStarry.addEventListener && modelStarry.addEventListener('model-loaded', (e) => {
-        console.log('starry model-loaded', e);
-      });
-      modelStarry.addEventListener && modelStarry.addEventListener('error', (e) => {
-        console.warn('starry model error', e);
-        showMessage('Error loading Starry model. Check console for details.');
-      });
-
-      // Asset loading: warn if a-assets did not load within a few seconds
-      const assetsEl = document.querySelector('a-assets');
-      if (assetsEl) {
-        let loaded = false;
-        assetsEl.addEventListener('loaded', () => { loaded = true; console.log('a-assets loaded'); });
-        setTimeout(() => { if (!loaded) console.warn('a-assets may not have finished loading'); }, 5000);
-      }
-
-      // Safety: if both markers present, prefer the one that fired most recently
-      // The event handlers above already toggle visibility so only one is visible.
-
-    })();
+    document.querySelector("#starry-marker").addEventListener("markerLost", () => {
+      document.querySelector("#starryScene").setAttribute("visible", false);
+    });
   </script>
+
 </body>
 
 </html>

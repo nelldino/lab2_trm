@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AR NFT – Van Gogh Journey</title>
+
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+
+    <!-- AR.js with NFT support -->
+    <script src="https://cdn.jsdelivr.net/npm/arjs@3.3.2/aframe/build/aframe-ar-nft.js"></script>
+
+    <style>
+        #message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 8px;
+            font-size: 18px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body style="margin: 0; overflow: hidden;">
+
+    <div id="message"></div>
+
+    <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" embedded
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+
+        <!-- --- 1. NFT #1 — Van Gogh portrait --- -->
+        <a-nft id="vangogh-marker" type="nft" url="./assets/markers/vangogh" smooth="true" smoothCount="10"
+            smoothTolerance="0.01" smoothThreshold="5">
+
+            <a-entity id="vincentModel" gltf-model="./assets/models/vincent.gltf" scale="1 1 1" position="0 0 0"
+                rotation="0 0 0" visible="false">
+            </a-entity>
+
+        </a-nft>
+
+
+        <!-- --- 2. NFT #2 — Starry Night --- -->
+        <a-nft id="starry-marker" type="nft" url="./assets/markers/starrynight" smooth="true" smoothCount="10"
+            smoothTolerance="0.01" smoothThreshold="5">
+
+            <a-entity id="starryScene" gltf-model="./assets/models/scene.gltf" scale="1 1 1" position="0 0 0"
+                rotation="0 0 0" visible="false">
+            </a-entity>
+
+        </a-nft>
+
+
+        <a-entity camera></a-entity>
+    </a-scene>
+
+
+    <script>
+        // ------------------------------
+        // STATE VARIABLES
+        // ------------------------------
+        let hasScannedVangogh = false;
+
+        // ------------------------------
+        // UTILITY: show message
+        // ------------------------------
+        function showMessage(text, duration = 2000) {
+            const msg = document.getElementById("message");
+            msg.innerHTML = text;
+            msg.style.display = "block";
+            setTimeout(() => msg.style.display = "none", duration);
+        }
+
+        // ------------------------------
+        // NFT #1 — Van Gogh logic
+        // ------------------------------
+        document.querySelector("#vangogh-marker").addEventListener("markerFound", () => {
+            hasScannedVangogh = true;
+
+            const vincent = document.querySelector("#vincentModel");
+            vincent.setAttribute("visible", true);
+
+            showMessage("You met the artist. The painting is now unlocked.");
+        });
+
+        document.querySelector("#vangogh-marker").addEventListener("markerLost", () => {
+            document.querySelector("#vincentModel").setAttribute("visible", false);
+        });
+
+
+        // ------------------------------
+        // NFT #2 — Starry Night logic
+        // ------------------------------
+        document.querySelector("#starry-marker").addEventListener("markerFound", () => {
+            if (!hasScannedVangogh) {
+                // Block the Starry Night until portrait is scanned
+                showMessage("Meet the artist first.");
+                return;
+            }
+
+            const starry = document.querySelector("#starryScene");
+            starry.setAttribute("visible", true);
+
+            showMessage("Welcome to Starry Night.");
+        });
+
+        document.querySelector("#starry-marker").addEventListener("markerLost", () => {
+            document.querySelector("#starryScene").setAttribute("visible", false);
+        });
+    </script>
+
+</body>
+
+</html>
