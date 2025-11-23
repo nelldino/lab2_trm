@@ -4,14 +4,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AR NFT – Van Gogh Journey</title>
+  <title>AR NFT – Van Gogh Journey (Debug)</title>
 
-  <!-- A-Frame (pinned for AR.js compatibility) -->
   <script src="https://aframe.io/releases/0.9.2/aframe.min.js"></script>
-  <!-- AR.js (pinned release with NFT support) -->
   <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar-nft.js"></script>
 
   <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
     #message {
       position: fixed;
       bottom: 20px;
@@ -23,62 +27,106 @@
       border-radius: 8px;
       font-size: 18px;
       display: none;
+      z-index: 10000;
+    }
+
+    #debug-panel {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #0f0;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      max-width: 300px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 9998;
+    }
+
+    .button {
+      position: fixed;
+      right: 12px;
+      z-index: 9999;
+      padding: 10px 14px;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #start-camera {
+      top: 12px;
+      background: #1e88e5;
+    }
+
+    #toggle-models {
+      top: 58px;
+      background: #4caf50;
+    }
+
+    #test-models {
+      top: 104px;
+      background: #ff9800;
     }
   </style>
 </head>
 
-<body style="margin: 0; overflow: hidden;">
-
+<body>
   <div id="message"></div>
+  <div id="debug-panel"></div>
 
-  <!-- Start camera button (user gesture required by some mobile browsers) -->
-  <button id="start-camera"
-    style="position:fixed;right:12px;top:12px;z-index:9999;padding:10px 14px;background:#1e88e5;color:#fff;border:none;border-radius:6px;font-size:16px">Start
-    Camera</button>
-
-  <!-- Debug: toggle models visibility for testing without markers -->
-  <button id="toggle-models"
-    style="position:fixed;right:12px;top:58px;z-index:9999;padding:8px 12px;background:#4caf50;color:#fff;border:none;border-radius:6px;font-size:14px">Toggle
-    Models</button>
+  <button id="start-camera" class="button">Start Camera</button>
+  <button id="toggle-models" class="button">Toggle Models</button>
+  <button id="test-models" class="button">Test Models</button>
 
   <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" embedded
     arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true; sourceWidth: 1280; sourceHeight: 720; canvasWidth: 1280; canvasHeight: 720;">
 
-    <!-- --- 1. NFT #1 — Van Gogh portrait --- -->
+    <!-- NFT #1 — Van Gogh portrait -->
     <a-nft id="vangogh-marker" type="nft" url="./vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01"
       smoothThreshold="5">
 
-      <a-entity id="vincentModel" gltf-model="./vincent.gltf" scale="1 1 1" position="0 0 0" rotation="0 0 0"
-        visible="false">
-      </a-entity>
+      <!-- Fallback: simple box if GLTF doesn't load -->
+      <a-box id="vincentFallback" color="#4CC3D9" depth="0.5" height="1" width="0.5" position="0 0.5 0"
+        visible="false"></a-box>
 
+      <a-entity id="vincentModel" gltf-model="./vincent.gltf" scale="1 1 1" position="0 0 0" rotation="0 0 0"
+        visible="false"></a-entity>
     </a-nft>
 
-
-    <!-- --- 2. NFT #2 — Starry Night --- -->
+    <!-- NFT #2 — Starry Night -->
     <a-nft id="starry-marker" type="nft" url="./starrynight" smooth="true" smoothCount="10" smoothTolerance="0.01"
       smoothThreshold="5">
 
+      <a-box id="starryFallback" color="#EF2D5E" depth="0.5" height="1" width="0.5" position="0 0.5 0"
+        visible="false"></a-box>
+
       <a-entity id="starryScene" gltf-model="./scene.gltf" scale="1 1 1" position="0 0 0" rotation="0 0 0"
-        visible="false">
-      </a-entity>
-
+        visible="false"></a-entity>
     </a-nft>
-
 
     <a-entity camera></a-entity>
   </a-scene>
 
-
   <script>
-    // ------------------------------
-    // STATE VARIABLES
-    // ------------------------------
-    let hasScannedVangogh = false;
+    // Debug logger
+    const debugPanel = document.getElementById('debug-panel');
+    function debugLog(msg) {
+      console.log(msg);
+      const time = new Date().toLocaleTimeString();
+      debugPanel.innerHTML += `[${time}] ${msg}<br>`;
+      debugPanel.scrollTop = debugPanel.scrollHeight;
+    }
 
-    // ------------------------------
-    // UTILITY: show message
-    // ------------------------------
+    // State
+    let hasScannedVangogh = false;
+    let vincentLoaded = false;
+    let starryLoaded = false;
+
+    // Show message
     function showMessage(text, duration = 2000) {
       const msg = document.getElementById("message");
       msg.innerHTML = text;
@@ -86,141 +134,245 @@
       setTimeout(() => msg.style.display = "none", duration);
     }
 
-    // ------------------------------
-    // NFT #1 — Van Gogh logic
-    // ------------------------------
+    // Check if files exist
+    async function checkFiles() {
+      debugLog('Checking model files...');
+
+      const files = [
+        './vincent.gltf',
+        './scene.gltf',
+        './vangogh.fset',
+        './vangogh.fset3',
+        './vangogh.iset',
+        './starrynight.fset',
+        './starrynight.fset3',
+        './starrynight.iset'
+      ];
+
+      for (const file of files) {
+        try {
+          const response = await fetch(file, { method: 'HEAD' });
+          debugLog(`${file}: ${response.ok ? '✓ OK' : '✗ NOT FOUND'}`);
+        } catch (err) {
+          debugLog(`${file}: ✗ ERROR - ${err.message}`);
+        }
+      }
+    }
+
+    // Van Gogh marker events
     document.querySelector("#vangogh-marker").addEventListener("markerFound", () => {
-      console.log('markerFound: vangogh-marker');
+      debugLog('✓ Van Gogh marker found');
       hasScannedVangogh = true;
 
       const vincent = document.querySelector("#vincentModel");
-      vincent.setAttribute("visible", true);
+      const fallback = document.querySelector("#vincentFallback");
+
+      if (vincentLoaded) {
+        vincent.setAttribute("visible", true);
+        debugLog('Vincent model shown');
+      } else {
+        fallback.setAttribute("visible", true);
+        debugLog('Vincent fallback shown (model not loaded)');
+      }
 
       showMessage("You met the artist. The painting is now unlocked.");
     });
 
     document.querySelector("#vangogh-marker").addEventListener("markerLost", () => {
-      console.log('markerLost: vangogh-marker');
+      debugLog('Van Gogh marker lost');
       document.querySelector("#vincentModel").setAttribute("visible", false);
+      document.querySelector("#vincentFallback").setAttribute("visible", false);
     });
 
-
-    // ------------------------------
-    // NFT #2 — Starry Night logic
-    // ------------------------------
+    // Starry Night marker events
     document.querySelector("#starry-marker").addEventListener("markerFound", () => {
-      console.log('markerFound: starry-marker');
+      debugLog('✓ Starry Night marker found');
+
       if (!hasScannedVangogh) {
-        // Block the Starry Night until portrait is scanned
         showMessage("Meet the artist first.");
+        debugLog('Blocked: Van Gogh not scanned yet');
         return;
       }
 
       const starry = document.querySelector("#starryScene");
-      starry.setAttribute("visible", true);
+      const fallback = document.querySelector("#starryFallback");
+
+      if (starryLoaded) {
+        starry.setAttribute("visible", true);
+        debugLog('Starry model shown');
+      } else {
+        fallback.setAttribute("visible", true);
+        debugLog('Starry fallback shown (model not loaded)');
+      }
 
       showMessage("Welcome to Starry Night.");
     });
 
     document.querySelector("#starry-marker").addEventListener("markerLost", () => {
-      console.log('markerLost: starry-marker');
+      debugLog('Starry Night marker lost');
       document.querySelector("#starryScene").setAttribute("visible", false);
+      document.querySelector("#starryFallback").setAttribute("visible", false);
     });
 
-    // ------------------------------
-    // MODEL LOAD DIAGNOSTICS
-    // ------------------------------
+    // Model loading events
     const vincent = document.querySelector('#vincentModel');
     const starry = document.querySelector('#starryScene');
-    if (vincent && vincent.addEventListener) {
-      vincent.addEventListener('model-loaded', (e) => { console.log('vincent model-loaded', e); fitModelToMarker(vincent, 0.6); });
-      vincent.addEventListener('error', (e) => { console.warn('vincent model error', e); showMessage('Error loading Vincent model.'); });
-    }
-    if (starry && starry.addEventListener) {
-      starry.addEventListener('model-loaded', (e) => { console.log('starry model-loaded', e); fitModelToMarker(starry, 0.9); });
-      starry.addEventListener('error', (e) => { console.warn('starry model error', e); showMessage('Error loading Starry model.'); });
+
+    if (vincent) {
+      vincent.addEventListener('model-loaded', (e) => {
+        vincentLoaded = true;
+        debugLog('✓ Vincent model loaded successfully');
+        fitModelToMarker(vincent, 0.6);
+      });
+
+      vincent.addEventListener('model-error', (e) => {
+        debugLog('✗ Vincent model ERROR: ' + (e.detail || 'unknown'));
+        showMessage('Vincent model failed to load');
+      });
     }
 
-    // Compute bounding box and scale/position the model so it sits on the marker
+    if (starry) {
+      starry.addEventListener('model-loaded', (e) => {
+        starryLoaded = true;
+        debugLog('✓ Starry model loaded successfully');
+        fitModelToMarker(starry, 0.9);
+      });
+
+      starry.addEventListener('model-error', (e) => {
+        debugLog('✗ Starry model ERROR: ' + (e.detail || 'unknown'));
+        showMessage('Starry model failed to load');
+      });
+    }
+
+    // Fit model to marker
     function fitModelToMarker(entity, desiredMeters = 0.8) {
       try {
         const obj = entity.object3D;
-        if (!obj) { console.warn('No object3D on entity', entity.id); return; }
-        // Ensure Three.js is available
-        if (typeof THREE === 'undefined') { console.warn('THREE not available'); return; }
+        if (!obj) {
+          debugLog('⚠ No object3D on ' + entity.id);
+          return;
+        }
+
+        if (typeof THREE === 'undefined') {
+          debugLog('⚠ THREE.js not available');
+          return;
+        }
+
         const bbox = new THREE.Box3().setFromObject(obj);
         const size = new THREE.Vector3();
         bbox.getSize(size);
         const maxDim = Math.max(size.x, size.y, size.z);
-        if (maxDim === 0) { console.warn('Model has zero size', entity.id); return; }
-        const scale = desiredMeters / maxDim;
-        // Apply uniform scale via A-Frame attribute so transforms stay consistent
-        entity.setAttribute('scale', `${scale} ${scale} ${scale}`);
-        // Move model so its bottom sits on the marker plane (y = 0)
-        const minY = bbox.min.y;
-        entity.object3D.position.y = -minY * scale;
-        console.log('fitModelToMarker', entity.id, { bbox, size, scale, minY });
-      } catch (err) {
-        console.error('fitModelToMarker error', err);
-      }
-    }
 
-    // ------------------------------
-    // USER-GESTURE CAMERA START (some browsers require user action)
-    // ------------------------------
-    const startBtn = document.getElementById('start-camera');
-    if (startBtn) {
-      startBtn.addEventListener('click', () => {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          showMessage('Camera not supported in this browser.');
+        if (maxDim === 0) {
+          debugLog('⚠ Model has zero size: ' + entity.id);
           return;
         }
 
-        showMessage('Requesting camera permission...');
-        const constraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
-        navigator.mediaDevices.getUserMedia(constraints)
-          .then(stream => {
-            // Stop the probe tracks — AR.js will create its own stream. This call just triggers permission.
-            stream.getTracks().forEach(t => t.stop());
-            showMessage('Camera permission granted. AR should start.');
-            startBtn.style.display = 'none';
-            console.log('Camera permission granted via user gesture');
-          })
-          .catch(err => {
-            console.warn('getUserMedia error', err);
-            let msg = 'Camera permission denied or not available';
-            if (err && err.name) msg += ' (' + err.name + ')';
-            msg += '. Use Chrome on Android or HTTPS on iOS.';
-            showMessage(msg, 5000);
-          });
-      });
-    }
-  </script>
+        const scale = desiredMeters / maxDim;
+        entity.setAttribute('scale', `${scale} ${scale} ${scale}`);
 
-  <script>
-    // Debug helper: toggle models to verify rendering without markers
-    const toggleBtn = document.getElementById('toggle-models');
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', () => {
-        const v = document.getElementById('vincentModel');
-        const s = document.getElementById('starryScene');
-        if (!v || !s) return;
-        const newVis = v.getAttribute('visible') !== 'true';
-        v.setAttribute('visible', newVis);
-        s.setAttribute('visible', newVis);
-        console.log('Debug: toggled model visibility ->', newVis);
-      });
+        const minY = bbox.min.y;
+        entity.object3D.position.y = -minY * scale;
+
+        debugLog(`Fitted ${entity.id}: scale=${scale.toFixed(3)}, size=${maxDim.toFixed(2)}`);
+      } catch (err) {
+        debugLog('✗ fitModelToMarker error: ' + err.message);
+      }
     }
 
-    // Log configured AR.js sizes for debugging
+    // Camera start button
+    document.getElementById('start-camera').addEventListener('click', () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showMessage('Camera not supported in this browser.');
+        debugLog('✗ Camera API not available');
+        return;
+      }
+
+      debugLog('Requesting camera permission...');
+      showMessage('Requesting camera permission...');
+
+      const constraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+          stream.getTracks().forEach(t => t.stop());
+          showMessage('Camera permission granted. AR should start.');
+          document.getElementById('start-camera').style.display = 'none';
+          debugLog('✓ Camera permission granted');
+        })
+        .catch(err => {
+          debugLog('✗ Camera error: ' + err.name);
+          showMessage('Camera permission denied: ' + err.name, 5000);
+        });
+    });
+
+    // Toggle models button
+    document.getElementById('toggle-models').addEventListener('click', () => {
+      const v = document.getElementById('vincentModel');
+      const s = document.getElementById('starryScene');
+      const vf = document.getElementById('vincentFallback');
+      const sf = document.getElementById('starryFallback');
+
+      const newVis = v.getAttribute('visible') !== 'true';
+
+      v.setAttribute('visible', newVis);
+      s.setAttribute('visible', newVis);
+      vf.setAttribute('visible', newVis);
+      sf.setAttribute('visible', newVis);
+
+      debugLog(`Toggled visibility: ${newVis}`);
+    });
+
+    // Test models button - force show without markers
+    document.getElementById('test-models').addEventListener('click', () => {
+      debugLog('Testing model visibility...');
+
+      const v = document.getElementById('vincentModel');
+      const s = document.getElementById('starryScene');
+      const vf = document.getElementById('vincentFallback');
+      const sf = document.getElementById('starryFallback');
+
+      // Position in front of camera
+      if (vincentLoaded) {
+        v.setAttribute('position', '0 0 -2');
+        v.setAttribute('visible', true);
+        debugLog('Vincent model positioned at 0 0 -2');
+      } else {
+        vf.setAttribute('position', '0 0 -2');
+        vf.setAttribute('visible', true);
+        debugLog('Vincent fallback positioned at 0 0 -2');
+      }
+
+      if (starryLoaded) {
+        s.setAttribute('position', '1 0 -2');
+        s.setAttribute('visible', true);
+        debugLog('Starry model positioned at 1 0 -2');
+      } else {
+        sf.setAttribute('position', '1 0 -2');
+        sf.setAttribute('visible', true);
+        debugLog('Starry fallback positioned at 1 0 -2');
+      }
+
+      showMessage('Models positioned in front of camera', 3000);
+    });
+
+    // Initialize
     window.addEventListener('load', () => {
+      debugLog('Page loaded');
+      checkFiles();
+
       const scene = document.querySelector('a-scene');
-      if (scene && scene.getAttribute('arjs')) {
-        console.log('AR.js config:', scene.getAttribute('arjs'));
+      if (scene) {
+        debugLog('AR.js config: ' + scene.getAttribute('arjs'));
       }
     });
   </script>
-
 </body>
 
 </html>
