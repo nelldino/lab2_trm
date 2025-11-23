@@ -133,12 +133,36 @@
     const vincent = document.querySelector('#vincentModel');
     const starry = document.querySelector('#starryScene');
     if (vincent && vincent.addEventListener) {
-      vincent.addEventListener('model-loaded', (e) => { console.log('vincent model-loaded', e); });
+      vincent.addEventListener('model-loaded', (e) => { console.log('vincent model-loaded', e); fitModelToMarker(vincent, 0.6); });
       vincent.addEventListener('error', (e) => { console.warn('vincent model error', e); showMessage('Error loading Vincent model.'); });
     }
     if (starry && starry.addEventListener) {
-      starry.addEventListener('model-loaded', (e) => { console.log('starry model-loaded', e); });
+      starry.addEventListener('model-loaded', (e) => { console.log('starry model-loaded', e); fitModelToMarker(starry, 0.9); });
       starry.addEventListener('error', (e) => { console.warn('starry model error', e); showMessage('Error loading Starry model.'); });
+    }
+
+    // Compute bounding box and scale/position the model so it sits on the marker
+    function fitModelToMarker(entity, desiredMeters = 0.8) {
+      try {
+        const obj = entity.object3D;
+        if (!obj) { console.warn('No object3D on entity', entity.id); return; }
+        // Ensure Three.js is available
+        if (typeof THREE === 'undefined') { console.warn('THREE not available'); return; }
+        const bbox = new THREE.Box3().setFromObject(obj);
+        const size = new THREE.Vector3();
+        bbox.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        if (maxDim === 0) { console.warn('Model has zero size', entity.id); return; }
+        const scale = desiredMeters / maxDim;
+        // Apply uniform scale via A-Frame attribute so transforms stay consistent
+        entity.setAttribute('scale', `${scale} ${scale} ${scale}`);
+        // Move model so its bottom sits on the marker plane (y = 0)
+        const minY = bbox.min.y;
+        entity.object3D.position.y = -minY * scale;
+        console.log('fitModelToMarker', entity.id, { bbox, size, scale, minY });
+      } catch (err) {
+        console.error('fitModelToMarker error', err);
+      }
     }
 
     // ------------------------------
