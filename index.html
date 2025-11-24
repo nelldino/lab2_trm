@@ -1,48 +1,412 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AR NFT – Van Gogh & Starry Night</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AR NFT – Van Gogh Journey (Debug)</title>
 
-  <!-- A-Frame -->
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/0.9.2/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar-nft.js"></script>
 
-  <!-- AR.js NFT build -->
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    #message {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border-radius: 8px;
+      font-size: 18px;
+      display: none;
+      z-index: 10000;
+    }
+
+    #debug-panel {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #0f0;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      max-width: 300px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 9998;
+    }
+
+    .button {
+      position: fixed;
+      right: 12px;
+      z-index: 9999;
+      padding: 10px 14px;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #start-camera {
+      top: 12px;
+      background: #1e88e5;
+    }
+
+    #toggle-models {
+      top: 58px;
+      background: #4caf50;
+    }
+
+    #test-models {
+      top: 104px;
+      background: #ff9800;
+    }
+  </style>
 </head>
 
-<body style="margin: 0; overflow: hidden;">
+<body>
+  <div id="message"></div>
+  <div id="debug-panel"></div>
 
-  <a-scene vr-mode-ui="enabled: false" embedded renderer="antialias: true; alpha: true;"
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+  <button id="start-camera" class="button">Start Camera</button>
+  <button id="toggle-models" class="button">Toggle Models</button>
+  <button id="test-models" class="button">Test Models</button>
+  <button id="create-test-box" class="button" style="top: 150px; background: #e91e63;">Create Test Box</button>
 
-    <!-- ================
-       MARKER 1 – STARRY NIGHT
-       ================ -->
-    <a-nft id="marker-starry" type="nft" url="./markers/starrynight" smooth="true" smoothCount="10"
-      smoothTolerance="0.01" smoothThreshold="5">
-      <!-- Starry Night 3D model -->
-      <a-entity id="model-starry" gltf-model="./models/starry.gltf" position="0 0 0" rotation="0 180 0"
-        scale="1.6 1.6 1.6"></a-entity>
-    </a-nft>
+  <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true; sourceWidth: 1280; sourceHeight: 720; canvasWidth: 1280; canvasHeight: 720;">
 
-    <!-- ================
-       MARKER 2 – VAN GOGH
-       ================ -->
-    <a-nft id="marker-vangogh" type="nft" url="./markers/vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01"
+    <!-- NFT #1 — Van Gogh portrait -->
+    <a-nft id="vangogh-marker" type="nft" url="./vangogh" smooth="true" smoothCount="10" smoothTolerance="0.01"
       smoothThreshold="5">
-      <!-- Van Gogh 3D model -->
-      <a-entity id="model-vangogh" gltf-model="./models/vangogh.gltf" position="0 0 0" rotation="0 180 0"
-        scale="1.6 1.6 1.6"></a-entity>
+
+      <!-- Fallback: simple box if GLTF doesn't load -->
+      <a-box id="vincentFallback" color="#4CC3D9" depth="0.5" height="1" width="0.5" position="0 0.5 0"
+        visible="false"></a-box>
+
+      <a-entity id="vincentModel" gltf-model="./vincent.gltf" scale="1 1 1" position="0 0 0" rotation="0 0 0"
+        visible="false"></a-entity>
     </a-nft>
 
-    <!-- Camera -->
-    <a-entity camera></a-entity>
+    <!-- NFT #2 — Starry Night -->
+    <a-nft id="starry-marker" type="nft" url="./starrynight" smooth="true" smoothCount="10" smoothTolerance="0.01"
+      smoothThreshold="5">
 
+      <a-box id="starryFallback" color="#EF2D5E" depth="0.5" height="1" width="0.5" position="0 0.5 0"
+        visible="false"></a-box>
+
+      <a-entity id="starryScene" gltf-model="./scene.gltf" scale="1 1 1" position="0 0 0" rotation="0 0 0"
+        visible="false"></a-entity>
+    </a-nft>
+
+    <a-entity camera></a-entity>
   </a-scene>
 
+  <script>
+    // Debug logger
+    const debugPanel = document.getElementById('debug-panel');
+    function debugLog(msg) {
+      console.log(msg);
+      const time = new Date().toLocaleTimeString();
+      debugPanel.innerHTML += `[${time}] ${msg}<br>`;
+      debugPanel.scrollTop = debugPanel.scrollHeight;
+    }
+
+    // State
+    let hasScannedVangogh = false;
+    let vincentLoaded = false;
+    let starryLoaded = false;
+
+    // Show message
+    function showMessage(text, duration = 2000) {
+      const msg = document.getElementById("message");
+      msg.innerHTML = text;
+      msg.style.display = "block";
+      setTimeout(() => msg.style.display = "none", duration);
+    }
+
+    // Check if files exist
+    async function checkFiles() {
+      debugLog('Checking model files...');
+
+      const files = [
+        './vincent.gltf',
+        './scene.gltf',
+        './vangogh.fset',
+        './vangogh.fset3',
+        './vangogh.iset',
+        './starrynight.fset',
+        './starrynight.fset3',
+        './starrynight.iset'
+      ];
+
+      for (const file of files) {
+        try {
+          const response = await fetch(file, { method: 'HEAD' });
+          debugLog(`${file}: ${response.ok ? '✓ OK' : '✗ NOT FOUND'}`);
+        } catch (err) {
+          debugLog(`${file}: ✗ ERROR - ${err.message}`);
+        }
+      }
+    }
+
+    // Van Gogh marker events
+    document.querySelector("#vangogh-marker").addEventListener("markerFound", () => {
+      debugLog('✓ Van Gogh marker found');
+      hasScannedVangogh = true;
+
+      const vincent = document.querySelector("#vincentModel");
+      const fallback = document.querySelector("#vincentFallback");
+
+      if (vincentLoaded) {
+        vincent.setAttribute("visible", true);
+        debugLog('Vincent model shown');
+      } else {
+        fallback.setAttribute("visible", true);
+        debugLog('Vincent fallback shown (model not loaded)');
+      }
+
+      showMessage("You met the artist. The painting is now unlocked.");
+    });
+
+    document.querySelector("#vangogh-marker").addEventListener("markerLost", () => {
+      debugLog('Van Gogh marker lost');
+      document.querySelector("#vincentModel").setAttribute("visible", false);
+      document.querySelector("#vincentFallback").setAttribute("visible", false);
+    });
+
+    // Starry Night marker events
+    document.querySelector("#starry-marker").addEventListener("markerFound", () => {
+      debugLog('✓ Starry Night marker found');
+
+      if (!hasScannedVangogh) {
+        showMessage("Meet the artist first.");
+        debugLog('Blocked: Van Gogh not scanned yet');
+        return;
+      }
+
+      const starry = document.querySelector("#starryScene");
+      const fallback = document.querySelector("#starryFallback");
+
+      if (starryLoaded) {
+        starry.setAttribute("visible", true);
+        debugLog('Starry model shown');
+      } else {
+        fallback.setAttribute("visible", true);
+        debugLog('Starry fallback shown (model not loaded)');
+      }
+
+      showMessage("Welcome to Starry Night.");
+    });
+
+    document.querySelector("#starry-marker").addEventListener("markerLost", () => {
+      debugLog('Starry Night marker lost');
+      document.querySelector("#starryScene").setAttribute("visible", false);
+      document.querySelector("#starryFallback").setAttribute("visible", false);
+    });
+
+    // Model loading events
+    const vincent = document.querySelector('#vincentModel');
+    const starry = document.querySelector('#starryScene');
+
+    if (vincent) {
+      vincent.addEventListener('model-loaded', (e) => {
+        vincentLoaded = true;
+        debugLog('✓ Vincent model loaded successfully');
+        fitModelToMarker(vincent, 0.6);
+      });
+
+      vincent.addEventListener('model-error', (e) => {
+        debugLog('✗ Vincent model ERROR: ' + (e.detail || 'unknown'));
+        showMessage('Vincent model failed to load');
+      });
+    }
+
+    if (starry) {
+      starry.addEventListener('model-loaded', (e) => {
+        starryLoaded = true;
+        debugLog('✓ Starry model loaded successfully');
+        fitModelToMarker(starry, 0.9);
+      });
+
+      starry.addEventListener('model-error', (e) => {
+        debugLog('✗ Starry model ERROR: ' + (e.detail || 'unknown'));
+        showMessage('Starry model failed to load');
+      });
+    }
+
+    // Fit model to marker
+    function fitModelToMarker(entity, desiredMeters = 0.8) {
+      try {
+        const obj = entity.object3D;
+        if (!obj) {
+          debugLog('⚠ No object3D on ' + entity.id);
+          return;
+        }
+
+        if (typeof THREE === 'undefined') {
+          debugLog('⚠ THREE.js not available');
+          return;
+        }
+
+        const bbox = new THREE.Box3().setFromObject(obj);
+        const size = new THREE.Vector3();
+        bbox.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z);
+
+        if (maxDim === 0) {
+          debugLog('⚠ Model has zero size: ' + entity.id);
+          return;
+        }
+
+        const scale = desiredMeters / maxDim;
+        entity.setAttribute('scale', `${scale} ${scale} ${scale}`);
+
+        const minY = bbox.min.y;
+        entity.object3D.position.y = -minY * scale;
+
+        debugLog(`Fitted ${entity.id}: scale=${scale.toFixed(3)}, size=${maxDim.toFixed(2)}`);
+      } catch (err) {
+        debugLog('✗ fitModelToMarker error: ' + err.message);
+      }
+    }
+
+    // Camera start button
+    document.getElementById('start-camera').addEventListener('click', () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showMessage('Camera not supported in this browser.');
+        debugLog('✗ Camera API not available');
+        return;
+      }
+
+      debugLog('Requesting camera permission...');
+      showMessage('Requesting camera permission...');
+
+      const constraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+          stream.getTracks().forEach(t => t.stop());
+          showMessage('Camera permission granted. AR should start.');
+          document.getElementById('start-camera').style.display = 'none';
+          debugLog('✓ Camera permission granted');
+        })
+        .catch(err => {
+          debugLog('✗ Camera error: ' + err.name);
+          showMessage('Camera permission denied: ' + err.name, 5000);
+        });
+    });
+
+    // Toggle models button
+    document.getElementById('toggle-models').addEventListener('click', () => {
+      const v = document.getElementById('vincentModel');
+      const s = document.getElementById('starryScene');
+      const vf = document.getElementById('vincentFallback');
+      const sf = document.getElementById('starryFallback');
+
+      const newVis = v.getAttribute('visible') !== 'true';
+
+      v.setAttribute('visible', newVis);
+      s.setAttribute('visible', newVis);
+      vf.setAttribute('visible', newVis);
+      sf.setAttribute('visible', newVis);
+
+      debugLog(`Toggled visibility: ${newVis}`);
+    });
+
+    // Test models button - force show without markers
+    document.getElementById('test-models').addEventListener('click', () => {
+      debugLog('Testing model visibility...');
+
+      const scene = document.querySelector('a-scene');
+      const camera = document.querySelector('[camera]');
+
+      if (!camera) {
+        debugLog('✗ Camera not found');
+        showMessage('Camera not initialized', 2000);
+        return;
+      }
+
+      const v = document.getElementById('vincentModel');
+      const s = document.getElementById('starryScene');
+      const vf = document.getElementById('vincentFallback');
+      const sf = document.getElementById('starryFallback');
+
+      // Temporarily detach from markers and attach to scene
+      const vParent = v.parentNode;
+      const sParent = s.parentNode;
+      const vfParent = vf.parentNode;
+      const sfParent = sf.parentNode;
+
+      // Get camera position
+      const cameraPos = camera.object3D.position;
+      const cameraRot = camera.object3D.rotation;
+
+      debugLog(`Camera at: ${cameraPos.x.toFixed(2)}, ${cameraPos.y.toFixed(2)}, ${cameraPos.z.toFixed(2)}`);
+
+      // Position in front of camera
+      if (vincentLoaded) {
+        v.object3D.position.set(cameraPos.x - 0.5, cameraPos.y, cameraPos.z - 2);
+        v.object3D.rotation.set(0, cameraRot.y, 0);
+        v.setAttribute('visible', true);
+        v.setAttribute('scale', '0.5 0.5 0.5');
+        debugLog('Vincent model positioned in world space');
+      } else {
+        vf.object3D.position.set(cameraPos.x - 0.5, cameraPos.y, cameraPos.z - 2);
+        vf.object3D.rotation.set(0, cameraRot.y, 0);
+        vf.setAttribute('visible', true);
+        debugLog('Vincent fallback positioned in world space');
+      }
+
+      if (starryLoaded) {
+        s.object3D.position.set(cameraPos.x + 0.5, cameraPos.y, cameraPos.z - 2);
+        s.object3D.rotation.set(0, cameraRot.y, 0);
+        s.setAttribute('visible', true);
+        s.setAttribute('scale', '0.5 0.5 0.5');
+        debugLog('Starry model positioned in world space');
+      } else {
+        sf.object3D.position.set(cameraPos.x + 0.5, cameraPos.y, cameraPos.z - 2);
+        sf.object3D.rotation.set(0, cameraRot.y, 0);
+        sf.setAttribute('visible', true);
+        debugLog('Starry fallback positioned in world space');
+      }
+
+      showMessage('Models positioned in front of camera', 3000);
+
+      // Force render
+      scene.object3D.visible = true;
+      if (scene.renderer) {
+        scene.renderer.render(scene.object3D, camera.object3DMap.camera);
+      }
+    });
+
+    // Initialize
+    window.addEventListener('load', () => {
+      debugLog('Page loaded');
+      checkFiles();
+
+      const scene = document.querySelector('a-scene');
+      if (scene) {
+        debugLog('AR.js config: ' + scene.getAttribute('arjs'));
+      }
+    });
+  </script>
 </body>
 
 </html>
