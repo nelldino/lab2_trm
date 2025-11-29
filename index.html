@@ -1,137 +1,333 @@
-<!doctype html>
-<html lang="en">
+<!-- import aframe and then ar.js with image tracking / location based features -->
+<script
+  src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
+<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+<script>
+  // ======= SEQUENTIAL LITTLE PRINCE STORY AR SYSTEM =======
 
-  <title>Little Prince AR Story – Text Panels</title>
+  // State Management
+  let firstMarkerScanned = false;
+  let secondMarkerUnlocked = false;
+  let currentPage = 0;
+  let totalInteractions = 0;
 
-  <!-- A-Frame + AR.js -->
-  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
-
-  <style>
-    .arjs-loader {
-      height: 100%;
-      width: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      background-color: rgba(0, 0, 0, 0.8);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.3em;
+  // Story content for Little Prince
+  const storyPages = [
+    {
+      title: "The Little Prince",
+      text: "Once upon a time, there was a little prince who lived on a planet scarcely bigger than himself."
+    },
+    {
+      title: "Chapter 1",
+      text: "He needed a sheep to eat the baobab sprouts on his planet. 'Draw me a sheep,' he asked."
+    },
+    {
+      title: "The Rose",
+      text: "On his planet, there was a rose. She was very beautiful and very proud."
     }
+  ];
 
-    #ar-ui {
-      position: fixed;
-      top: 10px;
-      width: 100%;
-      text-align: center;
-      z-index: 2000;
-      pointer-events: none;
-      font-family: Arial;
+  // Register custom A-Frame components for touch interactions
+  AFRAME.registerComponent('tap-listener', {
+    init: function () {
+      let touchStartTime = 0;
+
+      this.el.addEventListener('touchstart', (e) => {
+        touchStartTime = Date.now();
+      });
+
+      this.el.addEventListener('touchend', (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+        if (touchDuration < 200) { // Quick tap
+          this.el.emit('tap');
+          console.log('Tap detected on', this.el.id);
+        }
+      });
     }
+  });
 
-    #status-text-html {
-      background: rgba(255, 255, 0, 0.9);
-      padding: 10px 20px;
-      border-radius: 10px;
-      display: inline-block;
-      font-size: 18px;
-      margin-bottom: 5px;
-    }
+  window.addEventListener('load', function () {
+    const sceneEl = document.querySelector('a-scene');
+    const firstNft = document.querySelector('#first-marker');
+    const secondNft = document.querySelector('#second-marker');
+    const statusText = document.getElementById('status-text-html');
+    const interactionText = document.getElementById('interaction-text-html');
 
-    #interaction-text-html {
-      background: rgba(0, 255, 0, 0.9);
-      padding: 8px 16px;
-      border-radius: 8px;
-      display: inline-block;
-      font-size: 16px;
-    }
-  </style>
-</head>
+    // Text elements for story display
+    const firstStoryTitle = document.querySelector('#first-story-title');
+    const firstStoryText = document.querySelector('#first-story-text');
+    const secondStoryTitle = document.querySelector('#second-story-title');
+    const secondStoryText = document.querySelector('#second-story-text');
 
-<body style="margin:0; overflow:hidden;">
+    // Initially hide the second marker completely
+    secondNft.setAttribute('visible', 'false');
+    secondNft.object3D.visible = false;
 
-  <!-- UI Overlay -->
-  <div id="ar-ui">
-    <div id="status-text-html">Scan the first page…</div><br>
-    <div id="interaction-text-html">Little Prince Story AR</div>
-  </div>
+    // ======= SCENARIO 1: First Marker - Story Introduction =======
+    firstNft.addEventListener('markerFound', function () {
+      console.log('First marker (costume) found!');
 
-  <!-- Loader -->
-  <div class="arjs-loader">Loading markers…</div>
+      if (!firstMarkerScanned) {
+        firstMarkerScanned = true;
+        secondMarkerUnlocked = true;
+        totalInteractions++;
 
-  <!-- AR Scene -->
-  <a-scene renderer="logarithmicDepthBuffer: true;" embedded
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+        // Update UI
+        statusText.textContent = 'Chapter 1 Unlocked!';
+        interactionText.textContent = 'Tap the text to read more. Then find the second marker!';
 
-    <!-- PAGE 1 — Must be scanned first -->
-    <a-nft id="page1" type="nft" url="./markers/little_prince_page1" smooth="true" smoothCount="20"
-      smoothTolerance="0.5">
+        // Display first story page
+        firstStoryTitle.setAttribute('value', storyPages[0].title);
+        firstStoryText.setAttribute('value', storyPages[0].text);
 
-      <!-- BACK PANEL -->
-      <a-plane position="0 0 -100" width="200" height="120" color="#FFF0B3" opacity="0.9"></a-plane>
-
-      <!-- TEXT PANEL -->
-      <a-text id="page1-text"
-        value="The Little Prince – Page 1\n\nOnce upon a time, in the desert, a pilot met a mysterious young boy..."
-        color="#000" width="180" align="center" position="0 0 -99">
-      </a-text>
-    </a-nft>
-
-    <!-- PAGE 2 — LOCKED UNTIL PAGE 1 FOUND -->
-    <a-nft id="page2" type="nft" url="./markers/little_prince_page2" visible="false" smooth="true" smoothCount="20"
-      smoothTolerance="0.5">
-
-      <!-- BACK PANEL -->
-      <a-plane position="0 0 -100" width="200" height="120" color="#FFE6E6" opacity="0.9"></a-plane>
-
-      <!-- TEXT PANEL -->
-      <a-text id="page2-text"
-        value="The Little Prince – Page 2\n\nThe little prince spoke of his tiny home planet, the sunsets, and the rose he left behind."
-        color="#000" width="180" align="center" position="0 0 -99">
-      </a-text>
-    </a-nft>
-
-    <a-entity camera></a-entity>
-  </a-scene>
-
-  <script>
-    let page1Scanned = false;
-    const page2 = document.getElementById("page2");
-    const statusText = document.getElementById("status-text-html");
-    const interactionText = document.getElementById("interaction-text-html");
-
-    // ===== PAGE 1 LOGIC =====
-    document.getElementById("page1").addEventListener("markerFound", () => {
-      page1Scanned = true;
-
-      statusText.textContent = "Page 1 read! Now find Page 2.";
-      interactionText.textContent = "You unlocked the next page.";
-
-      // show page 2 marker
-      page2.setAttribute("visible", "true");
+        // Enable the second marker after 2 seconds
+        setTimeout(() => {
+          secondNft.setAttribute('visible', 'true');
+          secondNft.object3D.visible = true;
+          statusText.textContent = 'Now you can scan the second marker!';
+          console.log('Second marker unlocked!');
+        }, 2000);
+      } else {
+        // Already scanned, just show current page
+        firstStoryTitle.setAttribute('value', storyPages[currentPage].title);
+        firstStoryText.setAttribute('value', storyPages[currentPage].text);
+      }
     });
 
-    // ===== PAGE 2 LOGIC =====
-    document.getElementById("page2").addEventListener("markerFound", () => {
-      if (!page1Scanned) {
-        statusText.textContent = "You must read Page 1 first!";
-        interactionText.textContent = "Find the first marker.";
+    firstNft.addEventListener('markerLost', function () {
+      console.log('First marker lost!');
+      if (firstMarkerScanned) {
+        interactionText.textContent = 'Marker lost. Scan again to continue.';
+      }
+    });
+
+    // ======= SCENARIO 2: Touch Interaction on First Text Panel =======
+    const firstPanel = document.querySelector('#first-text-panel');
+
+    const handleFirstPanelInteraction = function () {
+      if (!firstMarkerScanned) return;
+
+      currentPage = (currentPage + 1) % storyPages.length;
+      totalInteractions++;
+      console.log('First panel tapped! Page:', currentPage);
+
+      // Update text with next page
+      firstStoryTitle.setAttribute('value', storyPages[currentPage].title);
+      firstStoryText.setAttribute('value', storyPages[currentPage].text);
+
+      // Flash the panel
+      firstPanel.setAttribute('color', '#FFE66D');
+      setTimeout(() => {
+        firstPanel.setAttribute('color', '#FFFFFF');
+      }, 300);
+
+      interactionText.textContent = `Page ${currentPage + 1} of ${storyPages.length}`;
+    };
+
+    firstPanel.addEventListener('tap', handleFirstPanelInteraction);
+
+    // ======= SCENARIO 3: Second Marker - Story Continuation =======
+    secondNft.addEventListener('markerFound', function () {
+      console.log('Second marker (little_prince) found!');
+
+      if (secondMarkerUnlocked && firstMarkerScanned) {
+        statusText.textContent = 'Chapter 2 Unlocked!';
+        interactionText.textContent = 'Tap to continue the story!';
+        totalInteractions++;
+
+        // Display second story content
+        secondStoryTitle.setAttribute('value', 'The Journey Begins');
+        secondStoryText.setAttribute('value', 'The Little Prince decided to leave his planet and visit other worlds to learn about life.');
+      } else if (!firstMarkerScanned) {
+        // Prevent access if first marker not scanned
+        statusText.textContent = 'LOCKED: Scan first marker first!';
+        interactionText.textContent = 'You must see the beginning of the story first.';
+        secondStoryTitle.setAttribute('value', '??? LOCKED ???');
+        secondStoryText.setAttribute('value', 'Find and scan the first marker to unlock this part of the story.');
+      }
+    });
+
+    secondNft.addEventListener('markerLost', function () {
+      console.log('Second marker lost!');
+    });
+
+    // Touch interaction on second text panel
+    const secondPanel = document.querySelector('#second-text-panel');
+    let secondPageIndex = 0;
+    const secondStoryPages = [
+      'The Little Prince decided to leave his planet and visit other worlds to learn about life.',
+      'He visited the king, the conceited man, the tippler, and the businessman.',
+      'Each taught him something about the strange ways of grown-ups.',
+      'Finally, he came to Earth, where he met the fox who taught him about taming and friendship.'
+    ];
+
+    const handleSecondPanelInteraction = function () {
+      if (!firstMarkerScanned || !secondMarkerUnlocked) {
+        interactionText.textContent = 'LOCKED! Scan first marker first!';
         return;
       }
 
-      statusText.textContent = "Page 2!";
-      interactionText.textContent = "Great job!";
-    });
-  </script>
+      secondPageIndex = (secondPageIndex + 1) % secondStoryPages.length;
+      totalInteractions++;
+      console.log('Second panel tapped! Page:', secondPageIndex);
 
+      // Update text
+      secondStoryText.setAttribute('value', secondStoryPages[secondPageIndex]);
+
+      // Flash the panel
+      secondPanel.setAttribute('color', '#4ECDC4');
+      setTimeout(() => {
+        secondPanel.setAttribute('color', '#FFFFFF');
+      }, 300);
+
+      interactionText.textContent = `Story part ${secondPageIndex + 1} of ${secondStoryPages.length}`;
+    };
+
+    secondPanel.addEventListener('tap', handleSecondPanelInteraction);
+
+    // Initial status message
+    statusText.textContent = 'Scan the FIRST marker to begin';
+    interactionText.textContent = 'Find the costume marker to start The Little Prince story!';
+
+    // ======= Stats Display =======
+    setInterval(() => {
+      console.log('=== AR Story Stats ===');
+      console.log('First Marker Scanned:', firstMarkerScanned);
+      console.log('Second Marker Unlocked:', secondMarkerUnlocked);
+      console.log('Total Interactions:', totalInteractions);
+    }, 10000);
+  });
+</script>
+
+<!-- style for the loader -->
+<style>
+  .arjs-loader {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .arjs-loader div {
+    text-align: center;
+    font-size: 1.25em;
+    color: white;
+  }
+
+  /* Interactive AR UI Overlay */
+  #ar-ui {
+    position: fixed;
+    top: 10px;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    pointer-events: none;
+    text-align: center;
+    font-family: Arial, sans-serif;
+  }
+
+  #status-text-html {
+    background: rgba(255, 255, 0, 0.9);
+    color: black;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  #interaction-text-html {
+    background: rgba(0, 255, 0, 0.9);
+    color: black;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    display: inline-block;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.1);
+    }
+  }
+</style>
+
+<body style="margin : 0px; overflow: hidden;">
+  <!-- AR UI Overlay -->
+  <div id="ar-ui">
+    <div id="status-text-html">Starting...</div>
+    <br>
+    <div id="interaction-text-html">Loading AR Experience...</div>
+  </div>
+
+  <!-- minimal loader shown until image descriptors are loaded -->
+  <div class="arjs-loader">
+    <div>Loading The Little Prince AR Story...</div>
+  </div>
+
+  <!-- a-frame scene -->
+  <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth: 640; sourceHeight: 480; displayWidth: 640; displayHeight: 480;">
+
+    <!-- FIRST NFT MARKER: costume (milky) -->
+    <a-nft id="first-marker" type="nft" url="./markers/costume" smooth="true" smoothCount="20" smoothTolerance="0.5"
+      smoothThreshold="2">
+      <!-- Text panel background -->
+      <a-plane id="first-text-panel" color="#FFFFFF" width="200" height="100" position="0 0 0" opacity="0.95"
+        tap-listener class="interactive">
+      </a-plane>
+
+      <!-- Story title -->
+      <a-text id="first-story-title" value="The Little Prince" color="#000000" position="0 30 1" align="center"
+        width="180" wrap-count="30" font="roboto"></a-text>
+
+      <!-- Story text -->
+      <a-text id="first-story-text" value="Scan the marker to begin..." color="#333333" position="0 0 1" align="center"
+        width="180" wrap-count="35" font="roboto"></a-text>
+
+      <!-- Instruction text -->
+      <a-text value="Tap to read more" color="#FF6B6B" position="0 -35 1" align="center" width="120" wrap-count="30"
+        font="roboto"></a-text>
+    </a-nft>
+
+    <!-- SECOND NFT MARKER: little_prince (initially hidden and locked) -->
+    <a-nft id="second-marker" type="nft" url="./markers/little_prince" smooth="true" smoothCount="20"
+      smoothTolerance="0.5" smoothThreshold="2" visible="false">
+      <!-- Text panel background -->
+      <a-plane id="second-text-panel" color="#FFFFFF" width="200" height="100" position="0 0 0" opacity="0.95"
+        tap-listener class="interactive">
+      </a-plane>
+
+      <!-- Story title -->
+      <a-text id="second-story-title" value="??? LOCKED ???" color="#000000" position="0 30 1" align="center"
+        width="180" wrap-count="30" font="roboto"></a-text>
+
+      <!-- Story text -->
+      <a-text id="second-story-text" value="Find the first marker..." color="#333333" position="0 0 1" align="center"
+        width="180" wrap-count="35" font="roboto"></a-text>
+
+      <!-- Instruction text -->
+      <a-text value="Tap to continue" color="#4ECDC4" position="0 -35 1" align="center" width="120" wrap-count="30"
+        font="roboto"></a-text>
+    </a-nft>
+
+    <!-- static camera that moves according to the device movements -->
+    <a-entity camera></a-entity>
+  </a-scene>
 </body>
-
-</html>
