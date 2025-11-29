@@ -1,377 +1,137 @@
-<!-- import aframe and then ar.js with image tracking / location based features -->
-<script
-  src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
-<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+<!doctype html>
+<html lang="en">
 
-<script>
-  // ======= INTERACTIVE AR SYSTEM WITH MULTIPLE SCENARIOS =======
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  // State Management
-  let firstMarkerScanned = false;
-  let secondMarkerUnlocked = false;
-  let clickCount = 0;
-  let griffinAnimating = false;
-  let sceneModelColor = 'original';
-  let totalInteractions = 0;
+  <title>Little Prince AR Story – Text Panels</title>
 
-  // Register custom A-Frame components for touch interactions
-  AFRAME.registerComponent('tap-listener', {
-    init: function () {
-      let touchStartTime = 0;
+  <!-- A-Frame + AR.js -->
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 
-      this.el.addEventListener('touchstart', (e) => {
-        touchStartTime = Date.now();
-      });
-
-      this.el.addEventListener('touchend', (e) => {
-        const touchDuration = Date.now() - touchStartTime;
-        if (touchDuration < 200) { // Quick tap
-          this.el.emit('tap');
-          console.log('Tap detected on', this.el.id);
-        }
-      });
-    }
-  });
-
-  window.addEventListener('load', function () {
-    const sceneEl = document.querySelector('a-scene');
-    const firstNft = document.querySelector('#first-marker');
-    const secondNft = document.querySelector('#second-marker');
-    const statusText = document.getElementById('status-text-html');
-    const interactionText = document.getElementById('interaction-text-html');
-
-    // Initially hide the second marker
-    secondNft.setAttribute('visible', 'false');
-
-    // ======= SCENARIO 1: Sequential Marker Scanning =======
-    firstNft.addEventListener('markerFound', function () {
-      console.log('First marker (milky) found!');
-
-      if (!firstMarkerScanned) {
-        firstMarkerScanned = true;
-        secondMarkerUnlocked = true;
-        totalInteractions++;
-
-        statusText.textContent = 'Scenario 1 Complete! Find booksign.';
-        setTimeout(() => {
-          interactionText.textContent = 'Tap the 3D model to interact!';
-        }, 2000);
-
-        // Enable the second marker
-        secondNft.setAttribute('visible', 'true');
-      }
-    });
-
-    // ======= SCENARIO 2: Touch Interaction on First Model =======
-    const firstModel = document.querySelector('#first-model');
-
-    const handleFirstModelInteraction = function () {
-      clickCount++;
-      totalInteractions++;
-      console.log('First model interaction! Count:', clickCount);
-
-      if (clickCount === 1) {
-        // First tap: Change color
-        interactionText.textContent = 'Color changed! Tap again!';
-        firstModel.setAttribute('material', 'color', '#FF6B6B');
-        sceneModelColor = 'red';
-      } else if (clickCount === 2) {
-        // Second tap: Rotate animation
-        interactionText.textContent = 'Rotating! Tap again!';
-        firstModel.setAttribute('animation', {
-          property: 'rotation',
-          to: '0 360 0',
-          dur: 2000,
-          easing: 'linear',
-          loop: false
-        });
-        firstModel.setAttribute('material', 'color', '#4ECDC4');
-        sceneModelColor = 'cyan';
-      } else if (clickCount === 3) {
-        // Third tap: Scale animation
-        interactionText.textContent = 'Growing! Tap to reset!';
-        firstModel.setAttribute('animation', {
-          property: 'scale',
-          from: '100 100 100',
-          to: '150 150 150',
-          dur: 1000,
-          easing: 'easeInOutQuad',
-          loop: false
-        });
-        firstModel.setAttribute('material', 'color', '#FFE66D');
-        sceneModelColor = 'yellow';
-      } else {
-        // Fourth tap: Reset
-        interactionText.textContent = 'Reset! Start tapping again!';
-        firstModel.setAttribute('animation', {
-          property: 'scale',
-          to: '100 100 100',
-          dur: 1000,
-          easing: 'easeInOutQuad',
-          loop: false
-        });
-        firstModel.removeAttribute('material');
-        clickCount = 0;
-        sceneModelColor = 'original';
-      }
-    };
-
-    // Listen for tap event
-    firstModel.addEventListener('tap', handleFirstModelInteraction);
-
-    // ======= SCENARIO 3: Griffin Model Interactions =======
-    secondNft.addEventListener('markerFound', function () {
-      console.log('Second marker (booksign) found!');
-
-      if (secondMarkerUnlocked) {
-        statusText.textContent = 'Scenario 2 Complete! Tap griffin!';
-        interactionText.textContent = 'Click the Griffin for animation!';
-        totalInteractions++;
-      } else {
-        interactionText.textContent = 'Scan first marker first!';
-      }
-    });
-
-    const griffinModel = document.querySelector('#griffin-model');
-    const debugBox = document.querySelector('#debug-box');
-
-    // Touch interaction on Griffin
-    const handleGriffinInteraction = function () {
-      if (!griffinAnimating) {
-        griffinAnimating = true;
-        totalInteractions++;
-        console.log('Griffin tapped! Total interactions:', totalInteractions);
-        interactionText.textContent = 'Griffin is flying!';
-
-        // Flying animation
-        griffinModel.setAttribute('animation__fly', {
-          property: 'position',
-          from: '0 0 0',
-          to: '0 100 0',
-          dur: 2000,
-          dir: 'alternate',
-          loop: 2,
-          easing: 'easeInOutSine'
-        });
-
-        // Rotation animation
-        griffinModel.setAttribute('animation__spin', {
-          property: 'rotation',
-          to: '0 360 0',
-          dur: 2000,
-          loop: 2,
-          easing: 'linear'
-        });
-
-        setTimeout(() => {
-          griffinAnimating = false;
-          interactionText.textContent = 'Tap again for more!';
-        }, 4000);
-      }
-    };
-
-    griffinModel.addEventListener('tap', handleGriffinInteraction);
-
-    // Touch interaction on debug box
-    const handleBoxInteraction = function () {
-      totalInteractions++;
-      console.log('Box tapped! Total:', totalInteractions);
-      const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181'];
-      const randomColor = colors[Math.floor(Math.random() * colors.length)];
-      debugBox.setAttribute('color', randomColor);
-      interactionText.textContent = 'Box color changed! Total: ' + totalInteractions;
-    };
-
-    debugBox.addEventListener('tap', handleBoxInteraction);
-
-    // ======= SCENARIO 4: Proximity Detection =======
-    let proximityTimer = 0;
-    firstNft.addEventListener('markerFound', function () {
-      proximityTimer = setInterval(() => {
-        if (firstMarkerScanned) {
-          interactionText.textContent = 'You are near marker 1!';
-        }
-      }, 3000);
-    });
-
-    firstNft.addEventListener('markerLost', function () {
-      clearInterval(proximityTimer);
-      interactionText.textContent = 'Marker 1 lost!';
-    });
-
-    // ======= SCENARIO 5: Multi-Touch Gesture (Double Tap) =======
-    let lastTapTime = 0;
-    let tapCounter = 0;
-
-    // Simple tap counter for testing
-    document.addEventListener('touchstart', function (e) {
-      tapCounter++;
-      const currentTime = Date.now();
-      const timeDiff = currentTime - lastTapTime;
-
-      console.log('=== TAP #' + tapCounter + ' ===');
-      console.log('Time since last tap:', timeDiff + 'ms');
-
-      // Show tap detected on screen
-      statusText.textContent = 'Tap detected! #' + tapCounter;
-
-      // Double tap detection
-      if (timeDiff < 500 && timeDiff > 50) {
-        totalInteractions++;
-        console.log('*** DOUBLE TAP! ***');
-
-        // Update display with animation
-        statusText.textContent = 'DOUBLE TAP! Total: ' + totalInteractions;
-        interactionText.textContent = '*** DOUBLE TAP! ***';
-        interactionText.classList.add('double-tap');
-
-        // Visual feedback
-        setTimeout(() => {
-          interactionText.textContent = 'Try again!';
-          interactionText.classList.remove('double-tap');
-        }, 1000);
-
-        lastTapTime = 0;
-      } else {
-        lastTapTime = currentTime;
-      }
-    }, true);
-
-    // Initial status message
-    statusText.textContent = 'Scan the first marker (milky)';
-    interactionText.textContent = 'Interactive AR Experience Ready!';
-
-    // ======= SCENARIO 6: Continuous Stats Display =======
-    setInterval(() => {
-      if (firstMarkerScanned || secondMarkerUnlocked) {
-        console.log('Total Interactions:', totalInteractions);
-        console.log('First Marker:', firstMarkerScanned);
-        console.log('Second Marker Unlocked:', secondMarkerUnlocked);
-      }
-    }, 5000);
-  });
-</script>
-
-<!-- style for the loader -->
-<style>
-  .arjs-loader {
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .arjs-loader div {
-    text-align: center;
-    font-size: 1.25em;
-    color: white;
-  }
-
-  /* Interactive AR UI Overlay */
-  #ar-ui {
-    position: fixed;
-    top: 10px;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    pointer-events: none;
-    text-align: center;
-    font-family: Arial, sans-serif;
-  }
-
-  #status-text-html {
-    background: rgba(255, 255, 0, 0.8);
-    color: black;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-size: 18px;
-    font-weight: bold;
-    display: inline-block;
-    margin-bottom: 10px;
-  }
-
-  #interaction-text-html {
-    background: rgba(0, 255, 0, 0.8);
-    color: black;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 16px;
-    display: inline-block;
-  }
-
-  #interaction-text-html.double-tap {
-    background: rgba(255, 0, 255, 0.9);
-    color: white;
-    font-size: 22px;
-    animation: pulse 0.5s;
-  }
-
-  @keyframes pulse {
-
-    0%,
-    100% {
-      transform: scale(1);
+  <style>
+    .arjs-loader {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.3em;
     }
 
-    50% {
-      transform: scale(1.2);
+    #ar-ui {
+      position: fixed;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      z-index: 2000;
+      pointer-events: none;
+      font-family: Arial;
     }
-  }
-</style>
 
-<body style="margin : 0px; overflow: hidden;">
-  <!-- AR UI Overlay -->
+    #status-text-html {
+      background: rgba(255, 255, 0, 0.9);
+      padding: 10px 20px;
+      border-radius: 10px;
+      display: inline-block;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    #interaction-text-html {
+      background: rgba(0, 255, 0, 0.9);
+      padding: 8px 16px;
+      border-radius: 8px;
+      display: inline-block;
+      font-size: 16px;
+    }
+  </style>
+</head>
+
+<body style="margin:0; overflow:hidden;">
+
+  <!-- UI Overlay -->
   <div id="ar-ui">
-    <div id="status-text-html">Tap anywhere to test!</div>
-    <br>
-    <div id="interaction-text-html">Double tap for interaction</div>
+    <div id="status-text-html">Scan the first page…</div><br>
+    <div id="interaction-text-html">Little Prince Story AR</div>
   </div>
 
-  <!-- minimal loader shown until image descriptors are loaded. Loading may take a while according to the device computational power -->
-  <div class="arjs-loader">
-    <div>Loading, please wait...</div>
-  </div>
+  <!-- Loader -->
+  <div class="arjs-loader">Loading markers…</div>
 
-  <!-- a-frame scene -->
-  <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth: 640; sourceHeight: 480; displayWidth: 640; displayHeight: 480;">
-    <!-- FIRST NFT MARKER: milky -->
-    <a-nft id="first-marker" type="nft" url="./markers/costume" smooth="true" smoothCount="20" smoothTolerance="0.5"
-      smoothThreshold="2">
-      <!-- First object 3D model with tap interaction -->
-      <a-entity id="first-model" gltf-model="./models/stars.gltf" scale="1 1 1" position="0.046 -0.012 -1.561"
-        rotation="0 0 0" tap-listener class="interactive">
-      </a-entity>
+  <!-- AR Scene -->
+  <a-scene renderer="logarithmicDepthBuffer: true;" embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+
+    <!-- PAGE 1 — Must be scanned first -->
+    <a-nft id="page1" type="nft" url="./markers/little_prince_page1" smooth="true" smoothCount="20"
+      smoothTolerance="0.5">
+
+      <!-- BACK PANEL -->
+      <a-plane position="0 0 -100" width="200" height="120" color="#FFF0B3" opacity="0.9"></a-plane>
+
+      <!-- TEXT PANEL -->
+      <a-text id="page1-text"
+        value="The Little Prince – Page 1\n\nOnce upon a time, in the desert, a pilot met a mysterious young boy..."
+        color="#000" width="180" align="center" position="0 0 -99">
+      </a-text>
     </a-nft>
 
-    <!-- SECOND NFT MARKER: booksign (initially hidden) -->
-    <a-nft id="second-marker" type="nft" url="./markers/starrynight" smooth="true" smoothCount="20"
-      smoothTolerance="0.5" smoothThreshold="2" visible="false">
-      <!-- Second object 3D model - Griffin with tap interaction -->
-      <a-entity id="griffin-model" gltf-model="griffin.gltf" scale="50 50 50" position="0 0 0" rotation="0 0 0"
-        tap-listener class="interactive">
-      </a-entity>
-      <!-- Debug red box to verify marker tracking and color interaction -->
-      <a-box id="debug-box" color="red" width="50" height="50" depth="50" position="0 25 0" opacity="0.5" tap-listener
-        class="interactive"></a-box>
+    <!-- PAGE 2 — LOCKED UNTIL PAGE 1 FOUND -->
+    <a-nft id="page2" type="nft" url="./markers/little_prince_page2" visible="false" smooth="true" smoothCount="20"
+      smoothTolerance="0.5">
+
+      <!-- BACK PANEL -->
+      <a-plane position="0 0 -100" width="200" height="120" color="#FFE6E6" opacity="0.9"></a-plane>
+
+      <!-- TEXT PANEL -->
+      <a-text id="page2-text"
+        value="The Little Prince – Page 2\n\nThe little prince spoke of his tiny home planet, the sunsets, and the rose he left behind."
+        color="#000" width="180" align="center" position="0 0 -99">
+      </a-text>
     </a-nft>
 
-    <!-- Status text displayed on screen -->
-    <a-entity position="0 0 -2">
-      <a-text id="status-text" value="Tap anywhere to test!" color="yellow" position="0 0.3 0" align="center" width="3"
-        wrap-count="40"></a-text>
-
-      <!-- Interaction feedback text -->
-      <a-text id="interaction-text" value="Double tap for interaction" color="#00FF00" position="0 -0.3 0"
-        align="center" width="3" wrap-count="40"></a-text>
-    </a-entity>
-    <!-- static camera that moves according to the device movemenents -->
     <a-entity camera></a-entity>
   </a-scene>
+
+  <script>
+    let page1Scanned = false;
+    const page2 = document.getElementById("page2");
+    const statusText = document.getElementById("status-text-html");
+    const interactionText = document.getElementById("interaction-text-html");
+
+    // ===== PAGE 1 LOGIC =====
+    document.getElementById("page1").addEventListener("markerFound", () => {
+      page1Scanned = true;
+
+      statusText.textContent = "Page 1 read! Now find Page 2.";
+      interactionText.textContent = "You unlocked the next page.";
+
+      // show page 2 marker
+      page2.setAttribute("visible", "true");
+    });
+
+    // ===== PAGE 2 LOGIC =====
+    document.getElementById("page2").addEventListener("markerFound", () => {
+      if (!page1Scanned) {
+        statusText.textContent = "You must read Page 1 first!";
+        interactionText.textContent = "Find the first marker.";
+        return;
+      }
+
+      statusText.textContent = "Page 2!";
+      interactionText.textContent = "Great job!";
+    });
+  </script>
+
 </body>
+
+</html>
