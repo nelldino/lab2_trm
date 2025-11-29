@@ -202,25 +202,6 @@
 
 <!-- style for the loader -->
 <style>
-  .arjs-loader {
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .arjs-loader div {
-    text-align: center;
-    font-size: 1.25em;
-    color: white;
-  }
-
   /* Interactive AR UI Overlay */
   #ar-ui {
     position: fixed;
@@ -274,11 +255,6 @@
     <div id="status-text-html">Starting...</div>
     <br>
     <div id="interaction-text-html">Loading AR Experience...</div>
-  </div>
-
-  <!-- minimal loader shown until image descriptors are loaded -->
-  <div class="arjs-loader">
-    <div>Loading The Little Prince AR Story...</div>
   </div>
 
   <!-- a-frame scene -->
