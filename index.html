@@ -286,8 +286,10 @@
     arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth: 640; sourceHeight: 480; displayWidth: 640; displayHeight: 480;">
 
     <!-- FIRST NFT MARKER: costume (milky) -->
-    <a-nft id="first-marker" type="nft" url="./markers/costume" smooth="true" smoothCount="20" smoothTolerance="0.5"
-      smoothThreshold="2">
+    <!-- Note: url should point to your NFT marker files WITHOUT extension (.fset, .fset3, .iset) -->
+    <!-- Example: if files are costume.fset, costume.fset3, costume.iset, use url="./markers/costume" -->
+    <a-nft id="first-marker" type="nft" url="https://lab2-trm.vercel.app/markers/costume" smooth="true" smoothCount="20"
+      smoothTolerance="0.5" smoothThreshold="2">
       <!-- Text panel background -->
       <a-plane id="first-text-panel" color="#FFFFFF" width="200" height="100" position="0 0 0" opacity="0.95"
         tap-listener class="interactive">
@@ -307,8 +309,9 @@
     </a-nft>
 
     <!-- SECOND NFT MARKER: little_prince (initially hidden and locked) -->
-    <a-nft id="second-marker" type="nft" url="./markers/little_prince" smooth="true" smoothCount="20"
-      smoothTolerance="0.5" smoothThreshold="2" visible="false">
+    <!-- Note: url should point to your NFT marker files WITHOUT extension -->
+    <a-nft id="second-marker" type="nft" url="https://lab2-trm.vercel.app/markers/little_prince" smooth="true"
+      smoothCount="20" smoothTolerance="0.5" smoothThreshold="2" visible="false">
       <!-- Text panel background -->
       <a-plane id="second-text-panel" color="#FFFFFF" width="200" height="100" position="0 0 0" opacity="0.95"
         tap-listener class="interactive">
