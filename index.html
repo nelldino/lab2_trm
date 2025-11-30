@@ -81,47 +81,6 @@
   // State Management
   let currentUnlockedScene = 1; // Start with Scene 1 unlocked
 
-  // Global handler for marker found events
-  window.handleMarkerFound = function (sceneNumber) {
-    const statusText = document.getElementById('status-text-html');
-    const interactionText = document.getElementById('interaction-text-html');
-
-    console.log(`Scene ${sceneNumber} marker found!`);
-
-    if (sceneNumber === currentUnlockedScene) {
-      // Correct scene found
-      const sceneData = storyScenes[sceneNumber - 1];
-      statusText.textContent = `Scene ${sceneNumber}: ${sceneData.title}`;
-
-      if (sceneNumber < 17) {
-        // Unlock next scene
-        currentUnlockedScene++;
-        interactionText.textContent = `Now find Scene ${currentUnlockedScene}!`;
-
-        // Update next marker's text
-        const nextTitleEl = document.querySelector(`#title-${currentUnlockedScene}`);
-        const nextTextEl = document.querySelector(`#text-${currentUnlockedScene}`);
-        const nextSceneData = storyScenes[currentUnlockedScene - 1];
-
-        if (nextTitleEl && nextTextEl) {
-          nextTitleEl.setAttribute('value', nextSceneData.title);
-          nextTextEl.setAttribute('value', nextSceneData.text);
-        }
-      } else {
-        interactionText.textContent = "You completed The Little Prince journey!";
-      }
-    } else if (sceneNumber < currentUnlockedScene) {
-      // Old scene
-      const sceneData = storyScenes[sceneNumber - 1];
-      statusText.textContent = `Scene ${sceneNumber}: ${sceneData.title}`;
-      interactionText.textContent = `You've seen this. Find Scene ${currentUnlockedScene}.`;
-    } else {
-      // Locked scene
-      statusText.textContent = "LOCKED";
-      interactionText.textContent = `Find Scene ${currentUnlockedScene} first!`;
-    }
-  };
-
   window.addEventListener('load', function () {
     const statusText = document.getElementById('status-text-html');
     const interactionText = document.getElementById('interaction-text-html');
@@ -129,6 +88,55 @@
     // Initialize UI
     statusText.textContent = 'Welcome to The Little Prince!';
     interactionText.textContent = 'Find Scene 1 (The Hat) to begin the journey.';
+
+    // Set up event listeners for all 17 markers
+    for (let i = 1; i <= 17; i++) {
+      const marker = document.querySelector(`#marker-${i}`);
+      if (marker) {
+        marker.addEventListener('markerFound', function () {
+          console.log(`Scene ${i} marker found!`);
+
+          if (i === currentUnlockedScene) {
+            // Correct scene found
+            const sceneData = storyScenes[i - 1];
+            statusText.textContent = `Scene ${i}: ${sceneData.title}`;
+
+            if (i < 17) {
+              // Unlock next scene
+              currentUnlockedScene++;
+              interactionText.textContent = `Great! Now find Scene ${currentUnlockedScene}!`;
+
+              // Update next marker's text
+              const nextTitleEl = document.querySelector(`#title-${currentUnlockedScene}`);
+              const nextTextEl = document.querySelector(`#text-${currentUnlockedScene}`);
+              const nextSceneData = storyScenes[currentUnlockedScene - 1];
+
+              if (nextTitleEl && nextTextEl) {
+                nextTitleEl.setAttribute('value', nextSceneData.title);
+                nextTextEl.setAttribute('value', nextSceneData.text);
+              }
+
+              console.log(`Scene ${currentUnlockedScene} unlocked!`);
+            } else {
+              interactionText.textContent = "🎉 You completed The Little Prince journey!";
+            }
+          } else if (i < currentUnlockedScene) {
+            // Old scene
+            const sceneData = storyScenes[i - 1];
+            statusText.textContent = `Scene ${i}: ${sceneData.title}`;
+            interactionText.textContent = `You've seen this. Find Scene ${currentUnlockedScene}.`;
+          } else {
+            // Locked scene
+            statusText.textContent = "🔒 LOCKED";
+            interactionText.textContent = `Find Scene ${currentUnlockedScene} first!`;
+          }
+        });
+
+        marker.addEventListener('markerLost', function () {
+          console.log(`Scene ${i} marker lost`);
+        });
+      }
+    }
   });
 </script>
 
@@ -195,7 +203,7 @@
 
     <!-- SCENE 1: The Hat (Unlocked by default) -->
     <a-nft id="marker-1" type="nft" url="https://lab2-trm.vercel.app/markers/scene1" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(1)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-1" value="The Hat" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-1"
@@ -205,7 +213,7 @@
 
     <!-- SCENE 2: Baobabs -->
     <a-nft id="marker-2" type="nft" url="https://lab2-trm.vercel.app/markers/scene2" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(2)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-2" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-2" value="Find Scene 1 first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -214,7 +222,7 @@
 
     <!-- SCENE 3: The Little Prince -->
     <a-nft id="marker-3" type="nft" url="https://lab2-trm.vercel.app/markers/scene3" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(3)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-3" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-3" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -223,7 +231,7 @@
 
     <!-- SCENE 4: Cleaning Volcanoes -->
     <a-nft id="marker-4" type="nft" url="https://lab2-trm.vercel.app/markers/scene4" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(4)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-4" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-4" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -232,7 +240,7 @@
 
     <!-- SCENE 5: The Rose -->
     <a-nft id="marker-5" type="nft" url="https://lab2-trm.vercel.app/markers/scene5" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(5)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-5" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-5" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -241,7 +249,7 @@
 
     <!-- SCENE 6: Leaving Home -->
     <a-nft id="marker-6" type="nft" url="https://lab2-trm.vercel.app/markers/scene6" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(6)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-6" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-6" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -250,7 +258,7 @@
 
     <!-- SCENE 7: The King -->
     <a-nft id="marker-7" type="nft" url="https://lab2-trm.vercel.app/markers/scene7" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(7)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-7" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-7" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -259,7 +267,7 @@
 
     <!-- SCENE 8: The Drunkard -->
     <a-nft id="marker-8" type="nft" url="https://lab2-trm.vercel.app/markers/scene8" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(8)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-8" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-8" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -268,7 +276,7 @@
 
     <!-- SCENE 9: The Businessman -->
     <a-nft id="marker-9" type="nft" url="https://lab2-trm.vercel.app/markers/scene9" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(9)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-9" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-9" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -277,7 +285,7 @@
 
     <!-- SCENE 10: The Lamplighter -->
     <a-nft id="marker-10" type="nft" url="https://lab2-trm.vercel.app/markers/scene10" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(10)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-10" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-10" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -286,7 +294,7 @@
 
     <!-- SCENE 11: The Snake -->
     <a-nft id="marker-11" type="nft" url="https://lab2-trm.vercel.app/markers/scene11" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(11)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-11" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-11" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -295,7 +303,7 @@
 
     <!-- SCENE 12: Garden of Roses -->
     <a-nft id="marker-12" type="nft" url="https://lab2-trm.vercel.app/markers/scene12" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(12)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-12" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-12" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -304,7 +312,7 @@
 
     <!-- SCENE 13: The Fox -->
     <a-nft id="marker-13" type="nft" url="https://lab2-trm.vercel.app/markers/scene13" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(13)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-13" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-13" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -313,7 +321,7 @@
 
     <!-- SCENE 14: The Well -->
     <a-nft id="marker-14" type="nft" url="https://lab2-trm.vercel.app/markers/scene14" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(14)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-14" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-14" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -322,7 +330,7 @@
 
     <!-- SCENE 15: Realization -->
     <a-nft id="marker-15" type="nft" url="https://lab2-trm.vercel.app/markers/scene15" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(15)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-15" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-15" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -331,7 +339,7 @@
 
     <!-- SCENE 16: The Stars -->
     <a-nft id="marker-16" type="nft" url="https://lab2-trm.vercel.app/markers/scene16" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(16)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-16" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-16" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
@@ -340,7 +348,7 @@
 
     <!-- SCENE 17: Going Home -->
     <a-nft id="marker-17" type="nft" url="https://lab2-trm.vercel.app/markers/scene17" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5" markerhandler onmarkerfound="handleMarkerFound(17)">
+      smoothTolerance=".01" smoothThreshold="5">
       <a-text id="title-17" value="??? LOCKED ???" color="#000000" position="0 0 -100" rotation="-90 0 0" align="center"
         width="500" wrap-count="25"></a-text>
       <a-text id="text-17" value="Find the previous scene first." color="#333333" position="0 0 50" rotation="-90 0 0"
