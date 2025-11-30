@@ -122,10 +122,17 @@
         firstPanel.setAttribute('color', '#FFFFFF');
       }, 300);
 
+      // Flash the text to indicate interaction
+      firstStoryTextEl.setAttribute('color', '#FFE66D');
+      setTimeout(() => {
+        firstStoryTextEl.setAttribute('color', '#333333');
+      }, 300);
+
       interactionText.textContent = `Page ${currentPage + 1} of ${storyPages.length}`;
     };
 
     firstPanel.addEventListener('tap', handleFirstPanelInteraction);
+    firstStoryTextEl.addEventListener('tap', handleFirstPanelInteraction);
 
     // ======= SCENARIO 3: Second Marker - Story Continuation =======
     secondNft.addEventListener('markerFound', function () {
