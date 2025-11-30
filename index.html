@@ -1,370 +1,388 @@
-<!-- import aframe and then ar.js with image tracking / location based features -->
-<script
-  src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
-<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+<!DOCTYPE html>
+<html>
 
-<script>
-  // ======= THE LITTLE PRINCE AR STORY - 17 SCENES =======
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>The Little Prince AR Story</title>
 
-  // Story content for all 17 scenes
-  const storyScenes = [
-    {
-      title: "The Hat",
-      text: "When I was a child, I drew a picture of a boa swallowing an elephant.\nBut grown-ups only saw a hat.\nThey never understood."
-    },
-    {
-      title: "Baobabs",
-      text: "The Little Prince taught me that small problems can grow big.\nOn his tiny planet, he had to pull out baobab sprouts before they took over."
-    },
-    {
-      title: "The Little Prince",
-      text: "One day in the desert, a small boy appeared beside my plane.\nHe asked gently: 'Please... draw me a sheep.'\nThat was how I met the Little Prince."
-    },
-    {
-      title: "Cleaning Volcanoes",
-      text: "On his planet, he cleaned his tiny volcanoes every day.\n'It's easy,' he said, 'just take care of things a little at a time.'"
-    },
-    {
-      title: "The Rose",
-      text: "He cared for a rose that had appeared on his planet.\nShe was proud, but precious to him.\nHe didn't yet understand how much he loved her."
-    },
-    {
-      title: "Leaving Home",
-      text: "He decided to explore the universe to learn more about life.\nHe left his rose behind, even though his heart felt heavy."
-    },
-    {
-      title: "The King",
-      text: "He met a king who wanted to command everything — even the stars.\nThe Little Prince learned that real authority is about responsibility."
-    },
-    {
-      title: "The Drunkard",
-      text: "He met a sad man who kept trying to forget his problems.\nThe Little Prince felt compassion and continued his journey."
-    },
-    {
-      title: "The Businessman",
-      text: "He visited a businessman who spent all his time counting stars, thinking he owned them.\nThe Prince realized that owning things is not the same as understanding them."
-    },
-    {
-      title: "The Lamplighter",
-      text: "On a very small planet, a lamplighter lit and blew out a lamp every minute.\nThe Little Prince admired his devotion.\nIt was the only grown-up he truly respected."
-    },
-    {
-      title: "The Snake",
-      text: "When he arrived on Earth, a golden snake greeted him in the desert.\nIt spoke in riddles about life, endings, and beginnings."
-    },
-    {
-      title: "Garden of Roses",
-      text: "In a garden full of roses, he felt heartbroken.\nHe thought his rose wasn't special anymore...\nuntil he discovered that love makes someone unique."
-    },
-    {
-      title: "The Fox",
-      text: "The Fox taught him the most important lesson:\n'What is essential is invisible to the eye.'\nTo love someone is to become responsible for them."
-    },
-    {
-      title: "The Well",
-      text: "In the quiet desert, we found a well together.\n'The desert is beautiful because it hides a secret,' he said."
-    },
-    {
-      title: "Realization",
-      text: "He cried when he realized how deeply he loved his rose.\nHis journey had changed him."
-    },
-    {
-      title: "The Stars",
-      text: "He told me: 'The stars will be beautiful because one of them is where I live.\nWhen you look at the sky, you'll hear my laughter.'"
-    },
-    {
-      title: "Going Home",
-      text: "He left the Earth as gently as he had arrived.\nThe birds carried him back to his little planet...\nback to his rose."
-    }
-  ];
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Parisienne&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+    rel="stylesheet">
 
-  // State Management
-  let currentUnlockedScene = 1; // Start with Scene 1 unlocked
+  <!-- import aframe and then ar.js with image tracking / location based features -->
+  <script
+    src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+</head>
 
-  window.addEventListener('load', function () {
-    const statusText = document.getElementById('status-text-html');
-    const interactionText = document.getElementById('interaction-text-html');
+<body>
 
-    // Initialize UI
-    statusText.textContent = 'Welcome to The Little Prince!';
-    interactionText.textContent = 'Find Scene 1 (The Hat) to begin the journey.';
+  <script>
+    // ======= THE LITTLE PRINCE AR STORY - 17 SCENES =======
 
-    // Set up event listeners for all 17 markers
-    for (let i = 1; i <= 17; i++) {
-      const marker = document.querySelector(`#marker-${i}`);
-      if (marker) {
-        marker.addEventListener('markerFound', function () {
-          console.log(`Scene ${i} marker found!`);
+    // Story content for all 17 scenes
+    const storyScenes = [
+      {
+        title: "The Hat",
+        text: "When I was a child, I drew a picture of a boa swallowing an elephant.\nBut grown-ups only saw a hat.\nThey never understood."
+      },
+      {
+        title: "Baobabs",
+        text: "The Little Prince taught me that small problems can grow big.\nOn his tiny planet, he had to pull out baobab sprouts before they took over."
+      },
+      {
+        title: "The Little Prince",
+        text: "One day in the desert, a small boy appeared beside my plane.\nHe asked gently: 'Please... draw me a sheep.'\nThat was how I met the Little Prince."
+      },
+      {
+        title: "Cleaning Volcanoes",
+        text: "On his planet, he cleaned his tiny volcanoes every day.\n'It's easy,' he said, 'just take care of things a little at a time.'"
+      },
+      {
+        title: "The Rose",
+        text: "He cared for a rose that had appeared on his planet.\nShe was proud, but precious to him.\nHe didn't yet understand how much he loved her."
+      },
+      {
+        title: "Leaving Home",
+        text: "He decided to explore the universe to learn more about life.\nHe left his rose behind, even though his heart felt heavy."
+      },
+      {
+        title: "The King",
+        text: "He met a king who wanted to command everything — even the stars.\nThe Little Prince learned that real authority is about responsibility."
+      },
+      {
+        title: "The Drunkard",
+        text: "He met a sad man who kept trying to forget his problems.\nThe Little Prince felt compassion and continued his journey."
+      },
+      {
+        title: "The Businessman",
+        text: "He visited a businessman who spent all his time counting stars, thinking he owned them.\nThe Prince realized that owning things is not the same as understanding them."
+      },
+      {
+        title: "The Lamplighter",
+        text: "On a very small planet, a lamplighter lit and blew out a lamp every minute.\nThe Little Prince admired his devotion.\nIt was the only grown-up he truly respected."
+      },
+      {
+        title: "The Snake",
+        text: "When he arrived on Earth, a golden snake greeted him in the desert.\nIt spoke in riddles about life, endings, and beginnings."
+      },
+      {
+        title: "Garden of Roses",
+        text: "In a garden full of roses, he felt heartbroken.\nHe thought his rose wasn't special anymore...\nuntil he discovered that love makes someone unique."
+      },
+      {
+        title: "The Fox",
+        text: "The Fox taught him the most important lesson:\n'What is essential is invisible to the eye.'\nTo love someone is to become responsible for them."
+      },
+      {
+        title: "The Well",
+        text: "In the quiet desert, we found a well together.\n'The desert is beautiful because it hides a secret,' he said."
+      },
+      {
+        title: "Realization",
+        text: "He cried when he realized how deeply he loved his rose.\nHis journey had changed him."
+      },
+      {
+        title: "The Stars",
+        text: "He told me: 'The stars will be beautiful because one of them is where I live.\nWhen you look at the sky, you'll hear my laughter.'"
+      },
+      {
+        title: "Going Home",
+        text: "He left the Earth as gently as he had arrived.\nThe birds carried him back to his little planet...\nback to his rose."
+      }
+    ];
 
-          if (i === currentUnlockedScene) {
-            // Correct scene found
-            const sceneData = storyScenes[i - 1];
-            statusText.textContent = `Scene ${i}: ${sceneData.title}`;
+    // State Management
+    let currentUnlockedScene = 1; // Start with Scene 1 unlocked
 
-            if (i < 17) {
-              // Unlock next scene
-              currentUnlockedScene++;
-              interactionText.textContent = `Great! Now find Scene ${currentUnlockedScene}!`;
+    window.addEventListener('load', function () {
+      const statusText = document.getElementById('status-text-html');
+      const interactionText = document.getElementById('interaction-text-html');
 
-              // Update next marker's text
-              const nextTitleEl = document.querySelector(`#title-${currentUnlockedScene}`);
-              const nextTextEl = document.querySelector(`#text-${currentUnlockedScene}`);
-              const nextSceneData = storyScenes[currentUnlockedScene - 1];
+      // Initialize UI
+      statusText.textContent = 'Welcome to The Little Prince!';
+      interactionText.textContent = 'Find Scene 1 (The Hat) to begin the journey.';
 
-              if (nextTitleEl && nextTextEl) {
-                nextTitleEl.setAttribute('value', nextSceneData.title);
-                nextTitleEl.setAttribute('scale', '0.2 0.2 0.2');
-                nextTextEl.setAttribute('value', nextSceneData.text);
-                nextTextEl.setAttribute('scale', '0.2 0.2 0.2');
+      // Set up event listeners for all 17 markers
+      for (let i = 1; i <= 17; i++) {
+        const marker = document.querySelector(`#marker-${i}`);
+        if (marker) {
+          marker.addEventListener('markerFound', function () {
+            console.log(`Scene ${i} marker found!`);
+
+            if (i === currentUnlockedScene) {
+              // Correct scene found
+              const sceneData = storyScenes[i - 1];
+              statusText.textContent = `Scene ${i}: ${sceneData.title}`;
+
+              if (i < 17) {
+                // Unlock next scene
+                currentUnlockedScene++;
+                interactionText.textContent = `Great! Now find Scene ${currentUnlockedScene}!`;
+
+                // Update next marker's text
+                const nextTitleEl = document.querySelector(`#title-${currentUnlockedScene}`);
+                const nextTextEl = document.querySelector(`#text-${currentUnlockedScene}`);
+                const nextSceneData = storyScenes[currentUnlockedScene - 1];
+
+                if (nextTitleEl && nextTextEl) {
+                  nextTitleEl.setAttribute('value', nextSceneData.title);
+                  nextTitleEl.setAttribute('scale', '0.2 0.2 0.2');
+                  nextTextEl.setAttribute('value', nextSceneData.text);
+                  nextTextEl.setAttribute('scale', '0.2 0.2 0.2');
+                }
+
+                console.log(`Scene ${currentUnlockedScene} unlocked!`);
+              } else {
+                interactionText.textContent = "🎉 You completed The Little Prince journey!";
               }
-
-              console.log(`Scene ${currentUnlockedScene} unlocked!`);
+            } else if (i < currentUnlockedScene) {
+              // Old scene
+              const sceneData = storyScenes[i - 1];
+              statusText.textContent = `Scene ${i}: ${sceneData.title}`;
+              interactionText.textContent = `You've seen this. Find Scene ${currentUnlockedScene}.`;
             } else {
-              interactionText.textContent = "🎉 You completed The Little Prince journey!";
+              // Locked scene
+              statusText.textContent = "🔒 LOCKED";
+              interactionText.textContent = `Find Scene ${currentUnlockedScene} first!`;
             }
-          } else if (i < currentUnlockedScene) {
-            // Old scene
-            const sceneData = storyScenes[i - 1];
-            statusText.textContent = `Scene ${i}: ${sceneData.title}`;
-            interactionText.textContent = `You've seen this. Find Scene ${currentUnlockedScene}.`;
-          } else {
-            // Locked scene
-            statusText.textContent = "🔒 LOCKED";
-            interactionText.textContent = `Find Scene ${currentUnlockedScene} first!`;
-          }
-        });
+          });
 
-        marker.addEventListener('markerLost', function () {
-          console.log(`Scene ${i} marker lost`);
-        });
+          marker.addEventListener('markerLost', function () {
+            console.log(`Scene ${i} marker lost`);
+          });
+        }
+      }
+    });
+  </script>
+
+  <!-- style for the loader -->
+  <style>
+    /* Custom Font */
+    @font-face {
+      font-family: 'Orchidea Couture';
+      src: url('./OrchideaCouture.ttf') format('truetype');
+    }
+
+    /* Interactive AR UI Overlay */
+    #ar-ui {
+      position: fixed;
+      top: 10px;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      pointer-events: none;
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+
+    #status-text-html {
+      background: rgba(255, 255, 0, 0.9);
+      color: black;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    #interaction-text-html {
+      background: rgba(0, 255, 0, 0.9);
+      color: black;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      display: inline-block;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.1);
       }
     }
-  });
-</script>
+  </style>
 
-<!-- style for the loader -->
-<style>
-  /* Custom Font */
-  @font-face {
-    font-family: 'Orchidea Couture';
-    src: url('./OrchideaCouture.ttf') format('truetype');
-  }
+  <body style="margin : 0px; overflow: hidden;">
+    <!-- AR UI Overlay -->
+    <div id="ar-ui">
+      <div id="status-text-html">Starting...</div>
+      <br>
+      <div id="interaction-text-html">Loading AR Experience...</div>
+    </div>
 
-  /* Interactive AR UI Overlay */
-  #ar-ui {
-    position: fixed;
-    top: 10px;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    pointer-events: none;
-    text-align: center;
-    font-family: Arial, sans-serif;
-  }
+    <!-- a-frame scene -->
+    <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded
+      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth: 640; sourceHeight: 480; displayWidth: 640; displayHeight: 480;">
 
-  #status-text-html {
-    background: rgba(255, 255, 0, 0.9);
-    color: black;
-    padding: 12px 24px;
-    border-radius: 10px;
-    font-size: 18px;
-    font-weight: bold;
-    display: inline-block;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  }
+      <!-- SCENE 1: The Hat (Unlocked by default) -->
+      <a-nft id="marker-1" type="nft" url="https://lab2-trm.vercel.app/markers/scene1" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-1" value="The Hat" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          scale="0.2 0.2 0.2" align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-1"
+          value="When I was a child, I drew a picture of a boa swallowing an elephant.\nBut grown-ups only saw a hat.\nThey never understood."
+          color="#333333" position="57.522 0 -72.594" rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500"
+          wrap-count="35"></a-text>
+      </a-nft>
 
-  #interaction-text-html {
-    background: rgba(0, 255, 0, 0.9);
-    color: black;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 16px;
-    display: inline-block;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  }
+      <!-- SCENE 2: Baobabs -->
+      <a-nft id="marker-2" type="nft" url="https://lab2-trm.vercel.app/markers/scene2" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-2" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          scale="0.2 0.2 0.2" align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-2" value="Find Scene 1 first." color="#333333" position="57.522 0 -72.594" rotation="-90 0 0"
+          scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-  @keyframes pulse {
+      <!-- SCENE 3: The Little Prince -->
+      <a-nft id="marker-3" type="nft" url="https://lab2-trm.vercel.app/markers/scene3" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-3" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-3" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    0%,
-    100% {
-      transform: scale(1);
-    }
+      <!-- SCENE 4: Cleaning Volcanoes -->
+      <a-nft id="marker-4" type="nft" url="https://lab2-trm.vercel.app/markers/scene4" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-4" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-4" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    50% {
-      transform: scale(1.1);
-    }
-  }
-</style>
+      <!-- SCENE 5: The Rose -->
+      <a-nft id="marker-5" type="nft" url="https://lab2-trm.vercel.app/markers/scene5" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-5" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-5" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-<body style="margin : 0px; overflow: hidden;">
-  <!-- AR UI Overlay -->
-  <div id="ar-ui">
-    <div id="status-text-html">Starting...</div>
-    <br>
-    <div id="interaction-text-html">Loading AR Experience...</div>
-  </div>
+      <!-- SCENE 6: Leaving Home -->
+      <a-nft id="marker-6" type="nft" url="https://lab2-trm.vercel.app/markers/scene6" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-6" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-6" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-  <!-- a-frame scene -->
-  <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth: 640; sourceHeight: 480; displayWidth: 640; displayHeight: 480;">
+      <!-- SCENE 7: The King -->
+      <a-nft id="marker-7" type="nft" url="https://lab2-trm.vercel.app/markers/scene7" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-7" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-7" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 1: The Hat (Unlocked by default) -->
-    <a-nft id="marker-1" type="nft" url="https://lab2-trm.vercel.app/markers/scene1" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-1" value="The Hat" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        scale="0.2 0.2 0.2" align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-1"
-        value="When I was a child, I drew a picture of a boa swallowing an elephant.\nBut grown-ups only saw a hat.\nThey never understood."
-        color="#333333" position="57.522 0 -72.594" rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500"
-        wrap-count="35"></a-text>
-    </a-nft>
+      <!-- SCENE 8: The Drunkard -->
+      <a-nft id="marker-8" type="nft" url="https://lab2-trm.vercel.app/markers/scene8" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-8" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-8" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 2: Baobabs -->
-    <a-nft id="marker-2" type="nft" url="https://lab2-trm.vercel.app/markers/scene2" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-2" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        scale="0.2 0.2 0.2" align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-2" value="Find Scene 1 first." color="#333333" position="57.522 0 -72.594" rotation="-90 0 0"
-        scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
+      <!-- SCENE 9: The Businessman -->
+      <a-nft id="marker-9" type="nft" url="https://lab2-trm.vercel.app/markers/scene9" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-9" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-9" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 3: The Little Prince -->
-    <a-nft id="marker-3" type="nft" url="https://lab2-trm.vercel.app/markers/scene3" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-3" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-3" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
+      <!-- SCENE 10: The Lamplighter -->
+      <a-nft id="marker-10" type="nft" url="https://lab2-trm.vercel.app/markers/scene10" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-10" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-10" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 4: Cleaning Volcanoes -->
-    <a-nft id="marker-4" type="nft" url="https://lab2-trm.vercel.app/markers/scene4" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-4" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-4" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
+      <!-- SCENE 11: The Snake -->
+      <a-nft id="marker-11" type="nft" url="https://lab2-trm.vercel.app/markers/scene11" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-11" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-11" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 5: The Rose -->
-    <a-nft id="marker-5" type="nft" url="https://lab2-trm.vercel.app/markers/scene5" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-5" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-5" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
+      <!-- SCENE 12: Garden of Roses -->
+      <a-nft id="marker-12" type="nft" url="https://lab2-trm.vercel.app/markers/scene12" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-12" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-12" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 6: Leaving Home -->
-    <a-nft id="marker-6" type="nft" url="https://lab2-trm.vercel.app/markers/scene6" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-6" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-6" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
+      <!-- SCENE 13: The Fox -->
+      <a-nft id="marker-13" type="nft" url="https://lab2-trm.vercel.app/markers/scene13" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-13" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-13" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 7: The King -->
-    <a-nft id="marker-7" type="nft" url="https://lab2-trm.vercel.app/markers/scene7" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-7" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-7" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
+      <!-- SCENE 14: The Well -->
+      <a-nft id="marker-14" type="nft" url="https://lab2-trm.vercel.app/markers/scene14" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-14" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-14" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 8: The Drunkard -->
-    <a-nft id="marker-8" type="nft" url="https://lab2-trm.vercel.app/markers/scene8" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-8" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-8" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
+      <!-- SCENE 15: Realization -->
+      <a-nft id="marker-15" type="nft" url="https://lab2-trm.vercel.app/markers/scene15" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-15" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-15" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 9: The Businessman -->
-    <a-nft id="marker-9" type="nft" url="https://lab2-trm.vercel.app/markers/scene9" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-9" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-9" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
+      <!-- SCENE 16: The Stars -->
+      <a-nft id="marker-16" type="nft" url="https://lab2-trm.vercel.app/markers/scene16" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-16" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-16" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 10: The Lamplighter -->
-    <a-nft id="marker-10" type="nft" url="https://lab2-trm.vercel.app/markers/scene10" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-10" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-10" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
+      <!-- SCENE 17: Going Home -->
+      <a-nft id="marker-17" type="nft" url="https://lab2-trm.vercel.app/markers/scene17" smooth="true" smoothCount="10"
+        smoothTolerance=".01" smoothThreshold="5">
+        <a-text id="title-17" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
+          align="center" width="500" wrap-count="25"></a-text>
+        <a-text id="text-17" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
+          rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
+      </a-nft>
 
-    <!-- SCENE 11: The Snake -->
-    <a-nft id="marker-11" type="nft" url="https://lab2-trm.vercel.app/markers/scene11" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-11" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-11" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
-
-    <!-- SCENE 12: Garden of Roses -->
-    <a-nft id="marker-12" type="nft" url="https://lab2-trm.vercel.app/markers/scene12" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-12" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-12" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
-
-    <!-- SCENE 13: The Fox -->
-    <a-nft id="marker-13" type="nft" url="https://lab2-trm.vercel.app/markers/scene13" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-13" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-13" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
-
-    <!-- SCENE 14: The Well -->
-    <a-nft id="marker-14" type="nft" url="https://lab2-trm.vercel.app/markers/scene14" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-14" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-14" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
-
-    <!-- SCENE 15: Realization -->
-    <a-nft id="marker-15" type="nft" url="https://lab2-trm.vercel.app/markers/scene15" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-15" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-15" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
-
-    <!-- SCENE 16: The Stars -->
-    <a-nft id="marker-16" type="nft" url="https://lab2-trm.vercel.app/markers/scene16" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-16" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-16" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
-
-    <!-- SCENE 17: Going Home -->
-    <a-nft id="marker-17" type="nft" url="https://lab2-trm.vercel.app/markers/scene17" smooth="true" smoothCount="10"
-      smoothTolerance=".01" smoothThreshold="5">
-      <a-text id="title-17" value="??? LOCKED ???" color="#000000" position="57.023 0 -114.372" rotation="-90 0 0"
-        align="center" width="500" wrap-count="25"></a-text>
-      <a-text id="text-17" value="Find the previous scene first." color="#333333" position="57.522 0 -72.594"
-        rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500" wrap-count="35"></a-text>
-    </a-nft>
-
-    <!-- static camera that moves according to the device movements -->
-    <a-entity camera></a-entity>
-  </a-scene>
-</body>
+      <!-- static camera that moves according to the device movements -->
+      <a-entity camera></a-entity>
+    </a-scene>
+  </body>
