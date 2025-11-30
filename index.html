@@ -98,10 +98,20 @@
 
     // State Management
     let currentUnlockedScene = 1; // Start with Scene 1 unlocked
+    let secretSceneUnlocked = false; // Track if secret ending is available
 
     window.addEventListener('load', function () {
       const statusText = document.getElementById('status-text-html');
       const interactionText = document.getElementById('interaction-text-html');
+      const progressFill = document.getElementById('progress-fill');
+      const progressText = document.getElementById('progress-text');
+
+      // Function to update progress bar
+      function updateProgress(sceneNumber) {
+        const percentage = (sceneNumber / 17 * 100).toFixed(2);
+        progressFill.style.width = percentage + '%';
+        progressText.textContent = `Scene ${sceneNumber} of 17 - ${percentage}%`;
+      }
 
       // Initialize UI
       statusText.textContent = 'Welcome to The Little Prince!';
@@ -119,9 +129,10 @@
               const sceneData = storyScenes[i - 1];
               statusText.textContent = `Scene ${i}: ${sceneData.title}`;
 
-              if (i < 17) {
-                // Unlock next scene
+              if (i < 16) {
+                // Unlock next scene (1-15)
                 currentUnlockedScene++;
+                updateProgress(currentUnlockedScene);
                 interactionText.textContent = `Great! Now find Scene ${currentUnlockedScene}!`;
 
                 // Update next marker's text
@@ -137,8 +148,32 @@
                 }
 
                 console.log(`Scene ${currentUnlockedScene} unlocked!`);
-              } else {
-                interactionText.textContent = "🎉 You completed The Little Prince journey!";
+              } else if (i === 16) {
+                // Completed main story, unlock secret ending
+                secretSceneUnlocked = true;
+                currentUnlockedScene = 17; // Set to 17 for secret scene
+                updateProgress(16);
+                statusText.textContent = '✨ Main Story Complete!';
+                interactionText.textContent = '🔓 Secret unlocked! Find the hidden Scene 17 for an alternate ending...';
+
+                // Unlock scene 17
+                const secret17TitleEl = document.querySelector('#title-17');
+                const secret17TextEl = document.querySelector('#text-17');
+                const secret17Data = storyScenes[16];
+
+                if (secret17TitleEl && secret17TextEl) {
+                  secret17TitleEl.setAttribute('value', secret17Data.title);
+                  secret17TitleEl.setAttribute('scale', '0.2 0.2 0.2');
+                  secret17TextEl.setAttribute('value', secret17Data.text);
+                  secret17TextEl.setAttribute('scale', '0.2 0.2 0.2');
+                }
+
+                console.log('Secret Scene 17 unlocked!');
+              } else if (i === 17 && secretSceneUnlocked) {
+                // Found the secret ending!
+                updateProgress(17);
+                statusText.textContent = '🌟 Secret Ending Discovered!';
+                interactionText.textContent = '🎉 You found the alternate ending of The Little Prince!';
               }
             } else if (i < currentUnlockedScene) {
               // Old scene
@@ -147,8 +182,13 @@
               interactionText.textContent = `You've seen this. Find Scene ${currentUnlockedScene}.`;
             } else {
               // Locked scene
-              statusText.textContent = "🔒 LOCKED";
-              interactionText.textContent = `Find Scene ${currentUnlockedScene} first!`;
+              if (i === 17 && !secretSceneUnlocked) {
+                statusText.textContent = "❓ SECRET";
+                interactionText.textContent = "Complete the main story (Scene 16) to unlock this...";
+              } else {
+                statusText.textContent = "🔒 LOCKED";
+                interactionText.textContent = `Find Scene ${currentUnlockedScene} first!`;
+              }
             }
           });
 
@@ -198,6 +238,51 @@
       font-family: 'Parisienne', cursive;
     }
 
+    /* Progress Bar */
+    #progress-container {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      max-width: 400px;
+      z-index: 1000;
+    }
+
+    #progress-bar-bg {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 20px;
+      padding: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    #progress-bar {
+      width: 100%;
+      height: 25px;
+      background: #e0e0e0;
+      border-radius: 15px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #FFD700, #FFA500);
+      border-radius: 15px;
+      width: 5.88%;
+      transition: width 0.5s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    #progress-text {
+      text-align: center;
+      margin-top: 5px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
     @keyframes pulse {
 
       0%,
@@ -217,6 +302,16 @@
       <div id="status-text-html">Starting...</div>
       <br>
       <div id="interaction-text-html">Loading AR Experience...</div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div id="progress-container">
+      <div id="progress-bar-bg">
+        <div id="progress-bar">
+          <div id="progress-fill"></div>
+        </div>
+        <div id="progress-text">Scene 1 of 17 - 5.88%</div>
+      </div>
     </div>
 
     <!-- a-frame scene -->
