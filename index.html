@@ -99,6 +99,7 @@
     // State Management
     let currentUnlockedScene = 1; // Start with Scene 1 unlocked
     let secretSceneUnlocked = false; // Track if secret ending is available
+    let branchChoiceMade = false; // Track if King / Drunkard branch has been resolved
 
     window.addEventListener('load', function () {
       const statusText = document.getElementById('status-text-html');
@@ -124,6 +125,33 @@
           marker.addEventListener('markerFound', function () {
             console.log(`Scene ${i} marker found!`);
 
+            // Special handling for branching choice between Scene 7 (King) and Scene 8 (Drunkard)
+            if (!branchChoiceMade && currentUnlockedScene === 7 && (i === 7 || i === 8)) {
+              const sceneData = storyScenes[i - 1];
+              statusText.textContent = `Scene ${i}: ${sceneData.title}`;
+
+              // Resolve branch and jump to Businessman (Scene 9)
+              branchChoiceMade = true;
+              currentUnlockedScene = 9;
+              updateProgress(9);
+              interactionText.textContent = 'Great! Now find Scene 9 (The Businessman)!';
+
+              // Unlock Scene 9 content
+              const title9El = document.querySelector('#title-9');
+              const text9El = document.querySelector('#text-9');
+              const scene9Data = storyScenes[8]; // Businessman
+
+              if (title9El && text9El) {
+                title9El.setAttribute('value', scene9Data.title);
+                title9El.setAttribute('scale', '0.2 0.2 0.2');
+                text9El.setAttribute('value', scene9Data.text);
+                text9El.setAttribute('scale', '0.2 0.2 0.2');
+              }
+
+              console.log('Branch choice made, Scene 9 unlocked!');
+              return;
+            }
+
             if (i === currentUnlockedScene) {
               // Correct scene found
               const sceneData = storyScenes[i - 1];
@@ -133,21 +161,53 @@
                 // Unlock next scene (1-15)
                 currentUnlockedScene++;
                 updateProgress(currentUnlockedScene);
-                interactionText.textContent = `Great! Now find Scene ${currentUnlockedScene}!`;
 
-                // Update next marker's text
-                const nextTitleEl = document.querySelector(`#title-${currentUnlockedScene}`);
-                const nextTextEl = document.querySelector(`#text-${currentUnlockedScene}`);
-                const nextSceneData = storyScenes[currentUnlockedScene - 1];
+                // Special unlock logic when we arrive at the branching King/Drunkard scenes
+                if (currentUnlockedScene === 7) {
+                  interactionText.textContent = 'Choose your path: scan Scene 7 (The King) or Scene 8 (The Drunkard).';
 
-                if (nextTitleEl && nextTextEl) {
-                  nextTitleEl.setAttribute('value', nextSceneData.title);
-                  nextTitleEl.setAttribute('scale', '0.2 0.2 0.2');
-                  nextTextEl.setAttribute('value', nextSceneData.text);
-                  nextTextEl.setAttribute('scale', '0.2 0.2 0.2');
+                  // Unlock Scene 7 (King)
+                  const kingTitleEl = document.querySelector('#title-7');
+                  const kingTextEl = document.querySelector('#text-7');
+                  const kingData = storyScenes[6];
+
+                  if (kingTitleEl && kingTextEl) {
+                    kingTitleEl.setAttribute('value', kingData.title);
+                    kingTitleEl.setAttribute('scale', '0.2 0.2 0.2');
+                    kingTextEl.setAttribute('value', kingData.text);
+                    kingTextEl.setAttribute('scale', '0.2 0.2 0.2');
+                  }
+
+                  // Unlock Scene 8 (Drunkard) in parallel
+                  const drunkardTitleEl = document.querySelector('#title-8');
+                  const drunkardTextEl = document.querySelector('#text-8');
+                  const drunkardData = storyScenes[7];
+
+                  if (drunkardTitleEl && drunkardTextEl) {
+                    drunkardTitleEl.setAttribute('value', drunkardData.title);
+                    drunkardTitleEl.setAttribute('scale', '0.2 0.2 0.2');
+                    drunkardTextEl.setAttribute('value', drunkardData.text);
+                    drunkardTextEl.setAttribute('scale', '0.2 0.2 0.2');
+                  }
+
+                  console.log('Branching scenes 7 (King) and 8 (Drunkard) unlocked!');
+                } else {
+                  interactionText.textContent = `Great! Now find Scene ${currentUnlockedScene}!`;
+
+                  // Update next marker's text (standard linear flow)
+                  const nextTitleEl = document.querySelector(`#title-${currentUnlockedScene}`);
+                  const nextTextEl = document.querySelector(`#text-${currentUnlockedScene}`);
+                  const nextSceneData = storyScenes[currentUnlockedScene - 1];
+
+                  if (nextTitleEl && nextTextEl) {
+                    nextTitleEl.setAttribute('value', nextSceneData.title);
+                    nextTitleEl.setAttribute('scale', '0.2 0.2 0.2');
+                    nextTextEl.setAttribute('value', nextSceneData.text);
+                    nextTextEl.setAttribute('scale', '0.2 0.2 0.2');
+                  }
+
+                  console.log(`Scene ${currentUnlockedScene} unlocked!`);
                 }
-
-                console.log(`Scene ${currentUnlockedScene} unlocked!`);
               } else if (i === 16) {
                 // Completed main story, unlock secret ending
                 secretSceneUnlocked = true;
@@ -371,7 +431,7 @@
           position="57.522 0 -72.594" rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500"
           wrap-count="35"></a-text>
         <a-entity id="rose-model" gltf-model="./RedRose.glb" position="57 0 -90" rotation="-90 0 0"
-          scale="1 1 1"></a-entity>
+          scale="3 3 3"></a-entity>
       </a-nft>
 
       <!-- SCENE 6: Leaving Home -->
