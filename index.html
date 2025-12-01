@@ -320,6 +320,7 @@
       <!-- Font Assets -->
       <a-assets>
         <a-asset-item id="dejavu" src="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-asset-item>
+        <a-asset-item id="red-rose-model" src="RedRose.glb"></a-asset-item>
       </a-assets>
 
       <!-- SCENE 1: The Hat (Unlocked by default) -->
@@ -370,6 +371,8 @@
         <a-text id="text-5" value="Find the previous scene first." font="dejavu" color="#333333"
           position="57.522 0 -72.594" rotation="-90 0 0" scale="0.2 0.2 0.2" align="center" width="500"
           wrap-count="35"></a-text>
+        <a-entity id="rose-model" gltf-model="#red-rose-model" position="57 0 -90" rotation="-90 0 0"
+          scale="7 7 7"></a-entity>
       </a-nft>
 
       <!-- SCENE 6: Leaving Home -->
